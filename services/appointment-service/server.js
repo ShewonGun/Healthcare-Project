@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/dbConfig.js';
+import appointmentRoutes from './routes/appointmentRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -11,6 +12,8 @@ const PORT = process.env.PORT || 3004;
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/appointments', appointmentRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Appointment Service is running' });
