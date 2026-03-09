@@ -75,7 +75,7 @@ const PatientDashboard = () => {
 
   const totalPaid = payments
     .filter((p) => p.status === 'completed')
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
+    .reduce((sum, p) => sum + (p.amountLkr || 0), 0);
 
   const firstName =
     profile?.firstName || user?.firstName || user?.name?.split(' ')[0] || 'there';
@@ -124,7 +124,7 @@ const PatientDashboard = () => {
     },
     {
       label: 'Total Paid',
-      value: `$${totalPaid.toFixed(2)}`,
+      value: `LKR ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: <FiDollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />,
       bg: 'bg-green-50 dark:bg-green-900/20',
       to: null,

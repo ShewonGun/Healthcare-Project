@@ -5,7 +5,6 @@ import connectDB from './config/dbConfig.js';
 import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
-connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3003;
@@ -19,6 +18,8 @@ app.get('/', (req, res) => {
   res.json({ message: 'Admin Service is running' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Admin Service running on port ${PORT}`);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Admin Service running on port ${PORT}`);
+  });
 });

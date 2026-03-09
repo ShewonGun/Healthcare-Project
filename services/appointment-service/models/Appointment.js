@@ -15,6 +15,7 @@ const appointmentSchema = new mongoose.Schema(
     notes:{ type: String, default: null },
     cancellationReason:{ type: String, default: null },
     cancelledBy:{ type: String, enum: ['patient', 'doctor', null], default: null },
+    consultationFee: { type: Number, default: 0 },
     paymentStatus: { type: String, enum: ['pending', 'paid', 'refunded'], default: 'pending' },
     paymentMethod: { type: String, enum: ['card', 'cash', null], default: 'cash' },
     attachedReports: [

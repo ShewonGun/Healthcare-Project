@@ -26,8 +26,11 @@ const getPatientInfo = async (patientId, fallbackName) => {
     const res = await axios.get(`${PATIENT_URL}/api/patients/${patientId}`, {
       headers: { 'x-service-key': serviceKey },
     });
-    const p   = res.data.data;
-    return { id: patientId, name: p.name || fallbackName || 'Patient', email: p.email || null, phone: p.phone || null };
+    const p    = res.data.data;
+    const name = (p.firstName && p.lastName)
+      ? `${p.firstName} ${p.lastName}`
+      : (p.name || fallbackName || 'Patient');
+    return { id: patientId, name, email: p.email || null, phone: p.phone || null };
   } catch {
     return { id: patientId, name: fallbackName || 'Patient', email: null, phone: null };
   }
@@ -62,8 +65,9 @@ export const bookAppointment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Appointment date must be today or in the future' });
     }
 
-    // Verify doctor exists and is available — also grab their name as fallback
+    // Verify doctor exists and is available — also grab their name and fee
     let resolvedDoctorName = doctorName || null;
+    let resolvedConsultationFee = 0;
     try {
       const DOCTOR_SERVICE_URL = process.env.DOCTOR_SERVICE_URL || 'http://localhost:3002';
       const doctorRes = await axios.get(`${DOCTOR_SERVICE_URL}/api/doctors/${doctorId}`);
@@ -71,12 +75,19 @@ export const bookAppointment = async (req, res) => {
       if (!d.isAvailable) {
         return res.status(400).json({ success: false, message: 'Doctor is not currently available' });
       }
-      // Use fetched name if frontend didn't supply one
       if (!resolvedDoctorName && (d.firstName || d.lastName)) {
         resolvedDoctorName = `${d.firstName || ''} ${d.lastName || ''}`.trim();
       }
+      resolvedConsultationFee = d.consultationFee || 0;
     } catch {
       return res.status(404).json({ success: false, message: 'Doctor not found or unavailable' });
+    }
+
+    // If patientName wasn't supplied by the frontend, fetch it from patient-service
+    let resolvedPatientName = patientName || null;
+    if (!resolvedPatientName) {
+      const p = await getPatientInfo(req.user.id, null);
+      if (p.name && p.name !== 'Patient') resolvedPatientName = p.name;
     }
 
     // Prevent double-booking: same doctor, same date+time, not cancelled
@@ -94,13 +105,14 @@ export const bookAppointment = async (req, res) => {
     const appointment = await Appointment.create({
       patientId:   req.user.id,
       doctorId,
-      patientName: patientName || null,
+      patientName: resolvedPatientName,
       doctorName:  resolvedDoctorName,
       appointmentDate: new Date(appointmentDate),
       appointmentTime,
-      duration:    duration || 30,
-      type:        type || 'in_person',
-      reason:      reason || null,
+      duration:        duration || 30,
+      type:            type || 'in_person',
+      reason:          reason || null,
+      consultationFee: resolvedConsultationFee,
       attachedReports: Array.isArray(attachedReports) ? attachedReports : [],
     });
 

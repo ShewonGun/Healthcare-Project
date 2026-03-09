@@ -3,9 +3,9 @@ import mongoose from 'mongoose';
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('Auth Service: MongoDB connected');
+    console.log('Admin Service: MongoDB connected');
   } catch (error) {
-    console.error('Auth Service: MongoDB connection failed:', error.message);
+    console.error('Admin Service: MongoDB connection failed:', error.message);
     process.exit(1);
   }
 };

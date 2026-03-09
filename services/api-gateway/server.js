@@ -24,8 +24,9 @@ app.use((req, res, next) => {
 
 // ── Service URLs ──────────────────────────────────────────────────────────────
 const ROUTES = [
-  { prefix: '/api/patients',      target: process.env.PATIENT_SERVICE_URL      || 'http://localhost:3001' },  
-  { prefix: '/api/reports',        target: process.env.PATIENT_SERVICE_URL      || 'http://localhost:3001' },  
+  { prefix: '/api/auth',          target: process.env.AUTH_SERVICE_URL         || 'http://localhost:3009' },
+  { prefix: '/api/patients',      target: process.env.PATIENT_SERVICE_URL      || 'http://localhost:3001' },
+  { prefix: '/api/reports',       target: process.env.PATIENT_SERVICE_URL      || 'http://localhost:3001' },
   { prefix: '/api/doctors',       target: process.env.DOCTOR_SERVICE_URL       || 'http://localhost:3002' },
   { prefix: '/api/admin',         target: process.env.ADMIN_SERVICE_URL        || 'http://localhost:3003' },
   { prefix: '/api/appointments',  target: process.env.APPOINTMENT_SERVICE_URL  || 'http://localhost:3004' },

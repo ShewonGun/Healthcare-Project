@@ -1,7 +1,5 @@
 import express from 'express';
 import {
-  register,
-  login,
   getProfile,
   updateProfile,
   changePassword,
@@ -17,8 +15,7 @@ import { upload } from '../config/cloudinaryConfig.js';
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
+// register and login are handled by auth-service
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
 router.put('/profile/image', protect, upload.single('profileImage'), uploadProfileImage);

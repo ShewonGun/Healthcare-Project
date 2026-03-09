@@ -73,7 +73,7 @@ const DoctorDashboard = () => {
   const completedCount = appointments.filter((a) => a.status === 'completed').length;
   const totalEarnings  = payments
     .filter((p) => p.status === 'completed')
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
+    .reduce((sum, p) => sum + (p.amountLkr || 0), 0);
 
   const firstName =
     profile?.firstName || user?.firstName || user?.name?.split(' ')[0] || 'Doctor';
@@ -130,7 +130,7 @@ const DoctorDashboard = () => {
     },
     {
       label: 'Total Earnings',
-      value: `$${totalEarnings.toFixed(2)}`,
+      value: `LKR ${totalEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: <FiDollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
       bg: 'bg-blue-50 dark:bg-blue-900/20',
       to: null,

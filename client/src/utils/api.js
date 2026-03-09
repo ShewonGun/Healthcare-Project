@@ -20,15 +20,10 @@ api.interceptors.request.use((config) => {
 });
 
 // ── Auth endpoints ────────────────────────────────────────────────────────────
-const BASE = {
-  patient: "/patients",
-  doctor: "/doctors",
-  admin: "/admin",
-};
-
 export const authAPI = {
-  login: (role, body) => api.post(`${BASE[role]}/login`, body),
-  register: (role, body) => api.post(`${BASE[role]}/register`, body),
+  login:    (role, body) => api.post(`/auth/${role}/login`,    body),
+  register: (role, body) => api.post(`/auth/${role}/register`, body),
+  logout:   ()           => api.post('/auth/logout'),
 };
 
 // ── Patient endpoints ─────────────────────────────────────────────────────────

@@ -22,7 +22,7 @@ const formatTime = (t) => {
   return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
 };
 
-const formatCents = (cents) => `$${(cents / 100).toFixed(2)}`;
+const formatLkr = (lkr) => `LKR ${Number(lkr).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const Row = ({ label, value }) => (
   <div className="flex justify-between items-start gap-4 text-sm">
@@ -60,13 +60,14 @@ const StripeField = ({ children, label, hint }) => (
 );
 
 // ── Stripe card form — must be rendered inside <Elements> ─────────────────────
-const StripeForm = ({ appointment, amount, onSuccess }) => {
+const StripeForm = ({ appointment, amountLkr, onSuccess }) => {
   const stripe   = useStripe();
   const elements = useElements();
 
   const [name,     setName]     = useState('');
   const [paying,   setPaying]   = useState(false);
   const [payError, setPayError] = useState('');
+  const [rateInfo, setRateInfo] = useState(null); // { amountUsdCents, exchangeRate }
 
   const handlePay = async (e) => {
     e.preventDefault();
@@ -77,20 +78,22 @@ const StripeForm = ({ appointment, amount, onSuccess }) => {
     setPaying(true);
 
     try {
-      // 1. Create PaymentIntent (or retrieve existing one if already created)
-      let clientSecret, paymentIntentId;
+      // 1. Create PaymentIntent — backend fetches live rate and returns USD cents
+      let clientSecret, paymentIntentId, receivedUsdCents, receivedRate;
       try {
         const { data: intentRes } = await paymentAPI.createIntent({
           appointmentId: appointment._id,
           doctorId:      appointment.doctorId,
-          amount,
+          amountLkr,
           itemName: `Consultation with Dr. ${appointment.doctorName || 'Doctor'}`,
         });
         clientSecret    = intentRes.data.clientSecret;
         paymentIntentId = intentRes.data.paymentIntentId;
+        receivedUsdCents = intentRes.data.amountUsdCents;
+        receivedRate     = intentRes.data.exchangeRate;
+        setRateInfo({ amountUsdCents: receivedUsdCents, exchangeRate: receivedRate });
       } catch (intentErr) {
         if (intentErr.response?.status === 409) {
-          // Payment record already exists — reuse the existing clientSecret
           clientSecret    = intentErr.response.data?.data?.clientSecret;
           paymentIntentId = intentErr.response.data?.data?.paymentIntentId;
           if (!clientSecret) {
@@ -98,7 +101,7 @@ const StripeForm = ({ appointment, amount, onSuccess }) => {
             return;
           }
         } else {
-          throw intentErr; // re-throw non-409 errors
+          throw intentErr;
         }
       }
 
@@ -117,18 +120,13 @@ const StripeForm = ({ appointment, amount, onSuccess }) => {
       }
 
       if (paymentIntent?.status === 'succeeded') {
-        // Update appointment DB — markPaid is the direct, reliable path
-        // confirmTest is the backup (service-to-service from payment service)
-        // Neither should block the success screen since the card was already charged
         const markResult = await appointmentAPI.markPaid(appointment._id).catch(e => e);
         if (markResult instanceof Error) {
-          // Fallback: confirmTest will try to update appointment DB via service-to-service
           await paymentAPI.confirmTest({ paymentIntentId }).catch(() => {});
         } else {
-          // markPaid succeeded; update payment record in background
           paymentAPI.confirmTest({ paymentIntentId }).catch(() => {});
         }
-        onSuccess(amount);
+        onSuccess(amountLkr);
       } else {
         setPayError('Payment was not completed. Please try again.');
       }
@@ -179,6 +177,13 @@ const StripeForm = ({ appointment, amount, onSuccess }) => {
         Payments are encrypted and processed by Stripe
       </div>
 
+      {rateInfo && (
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          ≈ USD {(rateInfo.amountUsdCents / 100).toFixed(2)} charged to your card
+          {' '}(rate: 1 USD = LKR {rateInfo.exchangeRate.toFixed(2)})
+        </p>
+      )}
+
       {payError && (
         <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2.5">
           {payError}
@@ -194,7 +199,7 @@ const StripeForm = ({ appointment, amount, onSuccess }) => {
         {paying && (
           <div className="animate-spin rounded-full w-4 h-4 border-2 border-white border-t-transparent" />
         )}
-        {paying ? 'Processing…' : `Pay ${formatCents(amount)}`}
+        {paying ? 'Processing…' : `Pay ${formatLkr(amountLkr)}`}
       </button>
     </form>
   );
@@ -206,7 +211,7 @@ const PaymentCheckout = () => {
   const navigate          = useNavigate();
   const location          = useLocation();
 
-  const defaultAmount = location.state?.amount ?? 5000;
+  const defaultAmountLkr = location.state?.amountLkr ?? 3500;
 
   const [appointment, setAppointment] = useState(null);
   const [loading,     setLoading]     = useState(true);
@@ -222,12 +227,11 @@ const PaymentCheckout = () => {
       .finally(() => setLoading(false));
   }, [appointmentId]);
 
-  const amount = appointment?.consultationFee
-    ? Math.round(appointment.consultationFee * 100)
-    : defaultAmount;
+  // Doctor fee is stored in LKR on the appointment
+  const amountLkr = appointment?.consultationFee || defaultAmountLkr;
 
-  const handleSuccess = (amt) => {
-    setPaidAmount(amt);
+  const handleSuccess = (lkr) => {
+    setPaidAmount(lkr);
     setPaid(true);
   };
 
@@ -276,14 +280,14 @@ const PaymentCheckout = () => {
         </div>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Payment Successful!</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          {`Your card was charged ${formatCents(paidAmount)} via Stripe.`}
+          {`Your card was charged the equivalent of ${formatLkr(paidAmount)} via Stripe.`}
         </p>
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-5 text-left space-y-3 mb-6">
           <Row label="Appointment" value={`${formatDate(appointment.appointmentDate)} · ${formatTime(appointment.appointmentTime)}`} />
           <Row label="Doctor"      value={appointment.doctorName ? `Dr. ${appointment.doctorName}` : '—'} />
           <Row label="Type"        value={appointment.type === 'telemedicine' ? 'Telemedicine' : 'In-Person'} />
           <Row label="Method"      value="Card (Stripe)" />
-          <Row label="Amount" value={formatCents(paidAmount)} />
+          <Row label="Amount" value={formatLkr(paidAmount)} />
         </div>
         <div className="flex gap-3 justify-center flex-wrap">
           {appointment?.type === 'telemedicine' && (
@@ -346,7 +350,7 @@ const PaymentCheckout = () => {
               </div>
               <div className="border-t border-gray-100 dark:border-gray-800 pt-3 flex justify-between items-center">
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Total</span>
-                <span className="text-lg font-bold text-gray-900 dark:text-white">{formatCents(amount)}</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">{formatLkr(amountLkr)}</span>
               </div>
             </div>
           </div>
@@ -356,7 +360,7 @@ const PaymentCheckout = () => {
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-5 sm:p-6">
 
               <Elements stripe={stripePromise}>
-                <StripeForm appointment={appointment} amount={amount} onSuccess={handleSuccess} />
+                <StripeForm appointment={appointment} amountLkr={amountLkr} onSuccess={handleSuccess} />
               </Elements>
             </div>
           </div>

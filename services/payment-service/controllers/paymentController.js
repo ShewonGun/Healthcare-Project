@@ -7,25 +7,38 @@ const stripe = () => new Stripe(process.env.STRIPE_SECRET_KEY);
 // ── POST /api/payments/create-intent ─────────────────────────────────────────
 /**
  * Patient initiates payment. Creates a Stripe PaymentIntent.
- * Body: { appointmentId, doctorId, amount (in cents), currency?, itemName? }
- * Returns: { clientSecret, paymentIntentId } — frontend uses clientSecret with Stripe.js
+ * Body: { appointmentId, doctorId, amountLkr (LKR value e.g. 3500), itemName? }
+ * Fetches live LKR→USD rate, converts to USD cents for Stripe.
+ * Returns: { clientSecret, paymentIntentId, amountLkr, amountUsdCents }
  */
 export const createPaymentIntent = async (req, res) => {
   try {
     const {
       appointmentId,
       doctorId,
-      amount,          // in cents e.g. 5000 = $50.00
-      currency = 'usd',
+      amountLkr,       // LKR amount e.g. 3500
       itemName = 'Consultation Fee',
     } = req.body;
 
-    if (!appointmentId || !doctorId || !amount) {
+    if (!appointmentId || !doctorId || !amountLkr) {
       return res.status(400).json({
         success: false,
-        message: 'appointmentId, doctorId, and amount (in cents) are required',
+        message: 'appointmentId, doctorId, and amountLkr are required',
       });
     }
+
+    // ── Fetch live LKR → USD exchange rate ──────────────────────────────────
+    let lkrPerUsd = 320; // safe fallback
+    try {
+      const rateRes = await axios.get('https://open.er-api.com/v6/latest/USD', { timeout: 5000 });
+      lkrPerUsd = rateRes.data?.rates?.LKR || lkrPerUsd;
+    } catch {
+      console.warn('[Payment] Exchange rate fetch failed, using fallback 320 LKR/USD');
+    }
+
+    // Convert LKR → USD cents (Stripe smallest unit)
+    const amountUsdCents = Math.max(50, Math.round((amountLkr / lkrPerUsd) * 100)); // min $0.50
+    const exchangeRate   = lkrPerUsd;
 
     // Prevent duplicate pending/completed payments for the same appointment
     const existing = await Payment.findOne({
@@ -42,14 +55,16 @@ export const createPaymentIntent = async (req, res) => {
 
     // Create Stripe PaymentIntent
     const paymentIntent = await stripe().paymentIntents.create({
-      amount,
-      currency,
+      amount:   amountUsdCents,
+      currency: 'usd',
       automatic_payment_methods: { enabled: true },
       metadata: {
         appointmentId,
         patientId: req.user.id,
         doctorId,
         itemName,
+        amountLkr,
+        exchangeRate,
       },
     });
 
@@ -60,8 +75,9 @@ export const createPaymentIntent = async (req, res) => {
       doctorId,
       stripePaymentIntentId: paymentIntent.id,
       stripeClientSecret:    paymentIntent.client_secret,
-      amount,
-      currency,
+      amount:    amountUsdCents,
+      amountLkr,
+      currency:  'usd',
       status: 'pending',
       itemName,
     });
@@ -72,8 +88,9 @@ export const createPaymentIntent = async (req, res) => {
         paymentId:       payment._id,
         clientSecret:    paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
-        amount,
-        currency,
+        amountLkr,
+        amountUsdCents,
+        exchangeRate,
       },
     });
   } catch (error) {
@@ -222,7 +239,7 @@ export const getMyPaymentsAsDoctor = async (req, res) => {
     const payments = await Payment.find({
       doctorId: req.user.id,
       status:   'completed',
-    }).select('appointmentId status amount currency itemName createdAt').sort({ createdAt: -1 });
+    }).select('appointmentId status amount amountLkr currency itemName createdAt').sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: payments.length, data: payments });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -254,7 +271,7 @@ export const getPaymentById = async (req, res) => {
 export const adminMarkCashPaid = async (req, res) => {
   try {
     const { appointmentId } = req.params;
-    const { patientId = 'unknown', doctorId = 'unknown', amount = 0 } = req.body;
+    const { patientId = 'unknown', doctorId = 'unknown', amount = 0, amountLkr = 0 } = req.body;
 
     // Idempotent — don't double-complete
     const existing = await Payment.findOne({ appointmentId });
@@ -264,8 +281,9 @@ export const adminMarkCashPaid = async (req, res) => {
 
     let payment;
     if (existing) {
-      existing.status             = 'completed';
+      existing.status              = 'completed';
       existing.stripePaymentMethod = 'cash';
+      if (amountLkr) existing.amountLkr = amountLkr;
       payment = await existing.save();
     } else {
       payment = await Payment.create({
@@ -275,6 +293,7 @@ export const adminMarkCashPaid = async (req, res) => {
         stripePaymentIntentId: `cash_${appointmentId}`,
         stripeClientSecret:    'cash_na',
         amount,
+        amountLkr,
         currency: 'usd',
         status:   'completed',
         itemName: 'Cash Payment',

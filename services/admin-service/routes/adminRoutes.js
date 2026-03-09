@@ -1,13 +1,11 @@
 import express from 'express';
-import { register, login, getProfile, updateProfile, changePassword, verifyToken } from '../controllers/authController.js';
+import { getProfile, updateProfile, changePassword, verifyToken } from '../controllers/authController.js';
 import { getAllPatients, getAllDoctors, getAllAdmins, verifyDoctor } from '../controllers/adminController.js';
 import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Admin auth
-router.post('/register', register);
-router.post('/login', login);
+// register and login are handled by auth-service
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
 router.put('/change-password', protect, changePassword);

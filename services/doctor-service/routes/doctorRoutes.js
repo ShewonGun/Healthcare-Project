@@ -1,7 +1,5 @@
 import express from 'express';
 import {
-  register,
-  login,
   getProfile,
   updateProfile,
   changePassword,
@@ -22,9 +20,8 @@ import { upload } from '../config/cloudinaryConfig.js';
 
 const router = express.Router();
 
+// register and login are handled by auth-service
 // Public
-router.post('/register', register);
-router.post('/login', login);
 router.get('/', getDoctors);              
 router.put('/activate', activateAccount);  
 

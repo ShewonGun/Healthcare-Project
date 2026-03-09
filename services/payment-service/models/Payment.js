@@ -10,8 +10,9 @@ const paymentSchema = new mongoose.Schema(
     stripePaymentIntentId: { type: String, required: true, unique: true },
     stripeClientSecret:    { type: String, required: true },
 
-    amount:   { type: Number, required: true }, // in smallest currency unit (cents)
-    currency: { type: String, default: 'usd' },
+    amount:    { type: Number, required: true }, // USD cents charged to Stripe
+    amountLkr: { type: Number, default: 0 },     // original LKR amount for display
+    currency:  { type: String, default: 'usd' },
 
     status: {
       type: String,

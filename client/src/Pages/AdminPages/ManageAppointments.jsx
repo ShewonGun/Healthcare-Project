@@ -53,6 +53,7 @@ export default function ManageAppointments() {
         patientId: appt.patientId,
         doctorId:  appt.doctorId,
         amount:    0,
+        amountLkr: appt.consultationFee || 0,
       });
       setAppointments((prev) =>
         prev.map((a) => a._id === appt._id ? { ...a, paymentStatus: 'paid', paymentMethod: 'cash' } : a)

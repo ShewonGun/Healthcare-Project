@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { FiHome, FiUsers, FiZap, FiCalendar, FiFileText, FiUser, FiHeart, FiSun, FiMoon, FiChevronDown, FiLogOut, FiX, FiMenu, FiActivity } from 'react-icons/fi';
+import { FiUsers, FiZap, FiCalendar, FiFileText, FiUser, FiHeart, FiSun, FiMoon, FiChevronDown, FiLogOut, FiX, FiMenu, FiActivity } from 'react-icons/fi';
+import { MdDashboard } from 'react-icons/md';
 
 const NAV_LINKS = [
   {
     to: '/patient/dashboard',
     label: 'Dashboard',
-    icon: <FiHome className="w-4 h-4" />,
+    icon: <MdDashboard className="w-4 h-4" />,
   },
   {
     to: '/patient/doctors',

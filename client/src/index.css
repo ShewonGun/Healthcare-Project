@@ -10,11 +10,10 @@ body {
   font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Hide scrollbars globally while keeping scroll functionality */
 * {
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* IE / Edge */
+  scrollbar-width: none;        
+  -ms-overflow-style: none;    
 }
 *::-webkit-scrollbar {
-  display: none;                /* Chrome / Safari / Opera */
+  display: none;                
 }

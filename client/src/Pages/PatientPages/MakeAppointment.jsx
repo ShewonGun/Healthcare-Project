@@ -95,7 +95,7 @@ const MakeAppointment = () => {
     setErrors({});
     setSubmitting(true);
     try {
-      const patientName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+      const patientName = user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || '';
       const doctorName  = doctor ? `${doctor.firstName} ${doctor.lastName}` : '';
       const attachedReports = reports
         .filter((r) => selectedReports.has(r._id))

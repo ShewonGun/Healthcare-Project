@@ -5,7 +5,6 @@ import connectDB from './config/dbConfig.js';
 import doctorRoutes from './routes/doctorRoutes.js';
 
 dotenv.config();
-connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -19,6 +18,8 @@ app.get('/', (req, res) => {
   res.json({ message: 'Doctor Service is running' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Doctor Service running on port ${PORT}`);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Doctor Service running on port ${PORT}`);
+  });
 });
