@@ -3,9 +3,12 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/dbConfig.js';
 import appointmentRoutes from './routes/appointmentRoutes.js';
+import startCronJobs from './scripts/cronJobs.js';
 
 dotenv.config();
 connectDB();
+
+startCronJobs();
 
 const app = express();
 const PORT = process.env.PORT || 3004;

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../utils/api';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../Context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { toast } from 'react-hot-toast';
 import { FiActivity, FiSun, FiMoon } from 'react-icons/fi';
 
 const ROLES = [
@@ -38,9 +39,12 @@ const LoginPage = () => {
       // Inject role for patient/doctor services (they don't return `role` directly)
       if (!data.role) data.role = role;
       saveUser(data);
+      toast.success('Login successful.');
       navigate(DASHBOARD[role]);
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      const msg = err.response?.data?.message || 'Login failed. Please try again.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

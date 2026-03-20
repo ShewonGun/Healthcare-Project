@@ -54,7 +54,7 @@ const getDoctorInfo = async (doctorId, fallbackName) => {
 // Patient: Book an appointment
 export const bookAppointment = async (req, res) => {
   try {
-    const { doctorId, doctorName, patientName, appointmentDate, appointmentTime, duration, type, reason, attachedReports } = req.body;
+    const { doctorId, doctorName, patientName, appointmentDate, appointmentTime, type, reason, attachedReports } = req.body;
 
     if (!doctorId || !appointmentDate || !appointmentTime) {
       return res.status(400).json({ success: false, message: 'doctorId, appointmentDate, and appointmentTime are required' });
@@ -109,7 +109,7 @@ export const bookAppointment = async (req, res) => {
       doctorName:  resolvedDoctorName,
       appointmentDate: new Date(appointmentDate),
       appointmentTime,
-      duration:        duration || 30,
+      duration:        30,
       type:            type || 'in_person',
       reason:          reason || null,
       consultationFee: resolvedConsultationFee,

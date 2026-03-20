@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { adminAPI } from '../../utils/api';
-import { FiAlertCircle, FiCheck, FiSearch, FiX } from 'react-icons/fi';
+import { FiSearch, FiX } from 'react-icons/fi';
+import { toast } from 'react-hot-toast';
+import ViewDoctorModal from '../../Componets/AdminComponents/ViewDoctorModal';
+import Pagination from '../../Componets/SharedComponents/Pagination';
 
 //  Helpers 
 const TABS = [
@@ -10,26 +12,8 @@ const TABS = [
   { key: 'Pending',  label: 'Pending' },
 ];
 
-const Toast = ({ msg, type }) => {
-  if (!msg) return null;
-  const colors = type === 'error'
-    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
-    : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400';
-  return (
-    <div className={`flex items-center gap-2 text-sm border rounded-md px-4 py-3 mb-5 ${colors}`}>
-      {type === 'error' ? (
-        <FiAlertCircle className="w-4 h-4 shrink-0" />
-      ) : (
-        <FiCheck className="w-4 h-4 shrink-0" />
-      )}
-      {msg}
-    </div>
-  );
-};
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const ManageDoctors = () => {
-  const navigate = useNavigate();
   const [doctors, setDoctors] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,14 +21,9 @@ const ManageDoctors = () => {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('All');
   const [actionLoading, setActionLoading] = useState(null);
-  const [toast, setToast] = useState({ msg: '', type: '' });
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 5;
-
-  const showToast = (msg, type = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast({ msg: '', type: '' }), 4000);
-  };
 
   const fetchDoctors = useCallback(async () => {
     setLoading(true);
@@ -83,10 +62,10 @@ const ManageDoctors = () => {
     setActionLoading(id);
     try {
       await adminAPI.verifyDoctor(id, { isVerified: approve });
-      showToast(`Doctor ${approve ? 'approved' : 'rejected'} successfully.`);
+      toast.success(`Doctor ${approve ? 'approved' : 'rejected'} successfully.`);
       fetchDoctors();
     } catch {
-      showToast('Action failed. Please try again.', 'error');
+      toast.error('Action failed. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -151,7 +130,7 @@ const ManageDoctors = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-5 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex gap-1 mb-5 border-b border-gray-200 dark:border-gray-800 overflow-x-auto whitespace-nowrap">
         {TABS.map(({ key, label }) => (
           <button
             key={key}
@@ -176,7 +155,12 @@ const ManageDoctors = () => {
         ))}
       </div>
 
-      <Toast msg={toast.msg} type={toast.type} />
+      {selectedDoctor && (
+        <ViewDoctorModal
+          doctor={selectedDoctor}
+          onClose={() => setSelectedDoctor(null)}
+        />
+      )}
 
       {/* Results count */}
       <p className="text-xs text-gray-400 mb-4 font-medium uppercase tracking-wide">
@@ -184,11 +168,11 @@ const ManageDoctors = () => {
         {activeTab !== 'All' && <span className="text-indigo-500 dark:text-indigo-400"> · {activeTab}</span>}
       </p>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
+      {/* Table Wrapper */}
+      <div className="md:bg-white md:dark:bg-gray-900 md:border border-gray-200 dark:border-gray-800 md:rounded-md md:overflow-hidden">
+        <div className="overflow-hidden md:overflow-x-auto">
+          <table className="w-full text-sm block md:table">
+            <thead className="hidden md:table-header-group">
               <tr className="border-b border-gray-100 dark:border-gray-800">
                 <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Doctor</th>
                 <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Specialization</th>
@@ -197,30 +181,31 @@ const ManageDoctors = () => {
                 <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="block md:table-row-group space-y-4 md:space-y-0">
               {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center">
+                <tr className="block md:table-row bg-white dark:bg-gray-900 rounded-lg shadow-sm md:shadow-none border border-gray-200 dark:border-gray-800 md:border-none">
+                  <td colSpan={6} className="block md:table-cell px-5 py-12 text-center">
                     <p className="text-base font-medium text-gray-500 dark:text-gray-400">No doctors found</p>
                     <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Try a different search or filter</p>
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-14 text-center text-sm text-gray-400 dark:text-gray-500">No doctors found</td>
+                <tr className="block md:table-row bg-white dark:bg-gray-900 rounded-lg shadow-sm md:shadow-none border border-gray-200 dark:border-gray-800 md:border-none">
+                  <td colSpan={5} className="block md:table-cell px-5 py-14 text-center text-sm text-gray-400 dark:text-gray-500">No doctors found</td>
                 </tr>
               ) : (
                 paginated.map((doc) => (
                   <tr
                     key={doc._id}
-                    className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition last:border-0"
+                    className="block md:table-row bg-white dark:bg-gray-900 rounded-lg shadow-sm md:shadow-none border border-gray-200 dark:border-gray-800 md:border-none hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition p-2 md:p-0 md:border-b md:border-gray-100 dark:md:border-gray-800"
                   >
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-4 border-b border-gray-100 dark:border-gray-800 md:border-none">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Doctor</span>
+                      <div className="flex items-center gap-3 text-right md:text-left">
                         {doc.profileImage ? (
-                          <img src={doc.profileImage} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
+                          <img src={doc.profileImage} alt="" className="hidden md:block w-9 h-9 rounded-full object-cover shrink-0" />
                         ) : (
-                          <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm shrink-0">
+                          <div className="hidden md:flex w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm shrink-0">
                             {doc.firstName?.[0] || 'D'}
                           </div>
                         )}
@@ -233,20 +218,25 @@ const ManageDoctors = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-gray-600 dark:text-gray-300 text-sm">
-                      {Array.isArray(doc.specialization) ? doc.specialization.join(', ') : doc.specialization || '—'}
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-4 border-b border-gray-100 dark:border-gray-800 md:border-none text-gray-600 dark:text-gray-300 text-sm">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Specialization</span>
+                      <span className="text-right md:text-left">{Array.isArray(doc.specialization) ? doc.specialization.join(', ') : doc.specialization || '—'}</span>
                     </td>
                    
-                    <td className="px-5 py-4 text-sm">
-                      <p className="text-gray-600 dark:text-gray-300">
-                        {doc.experienceYears ? `${doc.experienceYears} yrs exp` : doc.experience ? `${doc.experience} yrs exp` : '—'}
-                      </p>
-                      {doc.consultationFee != null && (
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">${doc.consultationFee} / visit</p>
-                      )}
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-4 border-b border-gray-100 dark:border-gray-800 md:border-none text-sm">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Exp / Fee</span>
+                      <div className="text-right md:text-left">
+                        <p className="text-gray-600 dark:text-gray-300">
+                          {doc.experienceYears ? `${doc.experienceYears} yrs exp` : doc.experience ? `${doc.experience} yrs exp` : '—'}
+                        </p>
+                        {doc.consultationFee != null && (
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">${doc.consultationFee} / visit</p>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex flex-col gap-1">
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-4 border-b border-gray-100 dark:border-gray-800 md:border-none flex-row">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</span>
+                      <div className="flex flex-col gap-1 items-end md:items-start text-right md:text-left">
                       <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border w-fit ${
                         doc.isVerified
                           ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
@@ -263,10 +253,11 @@ const ManageDoctors = () => {
                       </span>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-4">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</span>
+                      <div className="flex items-center justify-end md:justify-start gap-2">
                         <button
-                          onClick={() => navigate(`/admin/doctors/${doc._id}`)}
+                          onClick={() => setSelectedDoctor(doc)}
                           className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
                         >
                           View
@@ -297,40 +288,14 @@ const ManageDoctors = () => {
           </table>
         </div>
 
-        <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between gap-4">
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            {filtered.length === 0 ? '0' : `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)}`} of {filtered.length} doctor{filtered.length !== 1 ? 's' : ''}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-            >
-              ← Prev
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-              <button
-                key={n}
-                onClick={() => setPage(n)}
-                className={`w-8 h-8 text-xs font-medium rounded-md border transition ${
-                  n === page
-                    ? 'border-indigo-600 bg-indigo-600 text-white'
-                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-            >
-              Next →
-            </button>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          onPageChange={setPage}
+          label="doctor"
+          pageSize={PAGE_SIZE}
+        />
       </div>
     </div>
   );

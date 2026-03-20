@@ -117,9 +117,14 @@ export const telemedicineAPI = {
 
 // ── Admin endpoints ──────────────────────────────────────────────────────────
 export const adminAPI = {
+  getProfile: () => api.get('/admin/profile'),
+  updateProfile: (body) => api.put('/admin/profile', body),
+  changePassword: (body) => api.put('/admin/change-password', body),
   getAllDoctors: () => api.get("/admin/users/doctors"),
   getAllPatients: () => api.get("/admin/users/patients"),
   getAllAdmins: () => api.get("/admin/users/admins"),
+  createAdmin: (body) => api.post('/auth/admin/register', body),
+  deleteAdmin: (id) => api.delete(`/admin/users/admins/${id}`),
   verifyDoctor: (id, body) =>
     api.put(`/admin/users/doctors/${id}/verify`, body),
   getAllAppointments: () => api.get("/appointments/admin/all"),

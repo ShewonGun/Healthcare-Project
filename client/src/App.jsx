@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './Context/AuthContext';
 import PrivateRoute from './Componets/SharedComponents/PrivateRoute';
 import PatientLayout from './layouts/PatientLayout';
 import DoctorLayout from './layouts/DoctorLayout';
@@ -22,29 +22,39 @@ import DoctorTelemedicineRoom from './Pages/DoctorPages/DoctorTelemedicineRoom';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './Pages/AdminPages/AdminDashboard';
 import ManageDoctors from './Pages/AdminPages/ManageDoctors';
-import DoctorVerification from './Pages/AdminPages/DoctorVerification';
 import ManagePatients from './Pages/AdminPages/ManagePatients';
 import ManageAdmins from './Pages/AdminPages/ManageAdmins';
 import ManageAppointments from './Pages/AdminPages/ManageAppointments';
 import ManagePayments from './Pages/AdminPages/ManagePayments';
+import AdminProfile from './Pages/AdminPages/AdminProfile';
 import Landing from './Pages/SharedPages/Landing';
 import PatientDashboard from './Pages/PatientPages/PatientDashboard';
 import DoctorDashboard from './Pages/DoctorPages/DoctorDashboard';
-
-// ── Placeholder dashboards (replace with real pages as you build them) ────────
-const Placeholder = ({ title }) => (
-  <div className="flex items-center justify-center py-24">
-    <div className="text-center">
-      <h1 className="text-3xl font-bold text-gray-800 mb-2">{title}</h1>
-      <p className="text-gray-500">Coming soon.</p>
-    </div>
-  </div>
-);
+import { useTheme } from './context/ThemeContext';
+import { Toaster } from 'react-hot-toast';
 
 const App = () => {
+  const { theme } = useTheme();
+
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            style:
+              theme === 'dark'
+                ? {background: '#0f172a', color: '#f8fafc', border: '1px solid #334155'}
+                : {background: '#ffffff', color: '#0f172a', border: '1px solid #e2e8f0'},
+            success: {
+              iconTheme: { primary: '#16a34a', secondary: '#ffffff' },
+            },
+            error: {
+              iconTheme: { primary: '#dc2626', secondary: '#ffffff' },
+            },
+          }}
+        />
         <Routes>
           {/* Public */}
           <Route path="/" element={<Landing />} />
@@ -102,11 +112,11 @@ const App = () => {
           >
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="doctors" element={<ManageDoctors />} />
-            <Route path="doctors/:id" element={<DoctorVerification />} />
             <Route path="patients" element={<ManagePatients />} />
             <Route path="admins" element={<ManageAdmins />} />
             <Route path="appointments" element={<ManageAppointments />} />
             <Route path="transactions" element={<ManagePayments />} />
+            <Route path="profile" element={<AdminProfile />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

@@ -94,9 +94,7 @@ export const notifyAppointmentBooked = async (req, res) => {
       title:         'New Appointment Booked',
       message:       `Patient ${patient.name} has booked an appointment on ${date} at ${time}.`,
       email:         doctor.email,
-      phone:         doctor.phone,
       emailHtml:     appointmentBookedEmail({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
-      smsText:       appointmentBookedSMS({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
       referenceId:   appointment._id,
       referenceType: 'appointment',
     });

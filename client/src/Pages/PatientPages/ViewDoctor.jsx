@@ -44,6 +44,7 @@ const ViewDoctor = () => {
     doctor.address?.zipCode,
     doctor.address?.country,
   ].filter(Boolean);
+  const appointmentTypes = ['In-Person', 'Telemedicine'];
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
@@ -103,7 +104,7 @@ const ViewDoctor = () => {
             </div>
 
             {/* Quick stats */}
-            {(doctor.experience > 0 || doctor.gender || doctor.consultationFee > 0) && (
+            {(doctor.experience > 0 || doctor.gender || doctor.consultationFee > 0 || doctor.hospital || doctor.licenseNumber) && (
               <div className="flex flex-wrap gap-6">
                 {doctor.experience > 0 && (
                   <div>
@@ -117,16 +118,47 @@ const ViewDoctor = () => {
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{doctor.gender}</p>
                   </div>
                 )}
-                {doctor.consultationFee > 0 && (
+                {doctor.hospital && (
                   <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Consultation fee</p>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">LKR {doctor.consultationFee.toLocaleString()}</p>
+                    <p className="text-xs text-gray-400 mb-0.5">Hospital</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{doctor.hospital}</p>
+                  </div>
+                )}
+                {doctor.licenseNumber && (
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">License Number</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{doctor.licenseNumber}</p>
                   </div>
                 )}
               </div>
             )}
 
             <hr className="border-gray-100 dark:border-gray-800" />
+
+            {/* Description */}
+            {doctor.description && (
+              <div>
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">About Doctor</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+                  {doctor.description}
+                </p>
+              </div>
+            )}
+
+            {/* Appointment types */}
+            <div>
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Appointment Types Offered</h2>
+              <div className="flex flex-wrap gap-2">
+                {appointmentTypes.map((type) => (
+                  <span
+                    key={type}
+                    className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                  >
+                    {type}
+                  </span>
+                ))}
+              </div>
+            </div>
 
             {/* Qualifications */}
             {doctor.qualifications && (
@@ -135,6 +167,8 @@ const ViewDoctor = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{doctor.qualifications}</p>
               </div>
             )}
+
+            
 
             {/* Contact */}
             {(doctor.email || doctor.phone || addressParts.length > 0) && (
@@ -165,8 +199,8 @@ const ViewDoctor = () => {
           </div>
 
           {/* ── Right — Booking ── */}
-          <div className="-order-1 lg:order-0">
-            <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-5 lg:sticky lg:top-6">
+          <div className="lg:order-0">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-md p-5 lg:sticky lg:top-6">
               {doctor.consultationFee > 0 && (
                 <div className="mb-4 pb-4 border-b border-gray-100 dark:border-gray-800">
                   <p className="text-xs text-gray-400 mb-0.5">Consultation fee</p>
@@ -186,7 +220,7 @@ const ViewDoctor = () => {
               <button
                 onClick={() => navigate(`/patient/appointments/book/${doctor._id}`)}
                 disabled={!doctor.isAvailable}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 rounded-md transition-colors"
               >
                 {doctor.isAvailable ? 'Book Appointment' : 'Unavailable'}
               </button>

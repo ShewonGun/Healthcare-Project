@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../Context/AuthContext';
 import { FiGrid, FiUserCheck, FiUsers, FiShield, FiCalendar, FiCreditCard, FiLogOut, FiActivity } from 'react-icons/fi';
 
 const NAV_LINKS = [

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminAPI } from '../../utils/api';
+import { FiSearch, FiX } from 'react-icons/fi';
+import Pagination from '../../Componets/SharedComponents/Pagination';
 
 const PAGE_SIZE = 5;
 
@@ -31,10 +33,6 @@ function formatAmount(cents, currency = 'usd') {
     style: 'currency',
     currency: currency.toUpperCase(),
   }).format(cents / 100);
-}
-
-function shortId(id = '') {
-  return id.length > 14 ? `…${id.slice(-10)}` : id;
 }
 
 export default function ManagePayments() {
@@ -105,72 +103,95 @@ export default function ManagePayments() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-wrap mb-6">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Transactions</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             All payment transactions across the platform
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-xs text-gray-400 dark:text-gray-500">Total Revenue</p>
-            <p className="text-base font-bold text-green-600 dark:text-green-400">
-              {formatAmount(totalRevenue)}
-            </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+          <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0 order-2 sm:order-1">
+            <div className="text-left sm:text-right hidden sm:block">
+              <p className="text-xs text-gray-400 dark:text-gray-500">Total Revenue</p>
+              <p className="text-base font-bold text-green-600 dark:text-green-400">
+                {formatAmount(totalRevenue)}
+              </p>
+            </div>
+            
+            <div className="relative w-full sm:w-64">
+              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search patient, doctor, intent… "
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {search && (
+                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <FiX className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
-          <button
-            onClick={fetchPayments}
-            className="px-3.5 py-2 text-sm font-medium rounded-md border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-          >
-            Refresh
-          </button>
+          
+          {/* Mobile Revenue Display */}
+          <div className="sm:hidden flex w-full justify-between items-center bg-green-50 dark:bg-green-900/10 p-3 rounded-md border border-green-100 dark:border-green-900/20 order-1">
+             <p className="text-sm text-green-700 dark:text-green-400 font-medium">Total Revenue</p>
+             <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatAmount(totalRevenue)}</p>
+          </div>
         </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+        <div className="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 mb-6 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* Card */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md overflow-hidden">
-        {/* Tabs + Search */}
-        <div className="px-5 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex gap-1 flex-wrap">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize transition ${
-                  activeTab === tab
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                {tab === 'All' ? 'All' : tab}
-                <span className={`ml-1.5 text-[10px] ${activeTab === tab ? 'text-indigo-200' : 'text-gray-400'}`}>
-                  {counts[tab]}
-                </span>
-              </button>
-            ))}
-          </div>
-          <input
-            type="text"
-            placeholder="Search patient, doctor, intent ID…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sm:ml-auto w-full sm:w-64 px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-1 mb-5 border-b border-gray-200 dark:border-gray-800 overflow-x-auto whitespace-nowrap">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors capitalize ${
+              activeTab === tab
+                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            {tab === 'All' ? 'All' : tab}
+            {counts[tab] > 0 && (
+              <span className={`ml-1.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                activeTab === tab
+                  ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+              }`}>
+                {counts[tab]}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
 
+      {/* Results count */}
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+          {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+          {activeTab !== 'All' && <span className="text-indigo-500 dark:text-indigo-400"> · {activeTab}</span>}
+        </p>
+      </div>
+
+      {/* Card Wrapper */}
+      <div className="md:bg-white md:dark:bg-gray-900 md:border border-gray-200 dark:border-gray-800 md:rounded-md md:overflow-hidden">
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800/60 text-left">
+        <div className="overflow-hidden md:overflow-x-auto">
+          <table className="w-full text-sm block md:table">
+            <thead className="hidden md:table-header-group">
+              <tr className="bg-gray-50 dark:bg-gray-800/60 text-left border-b border-gray-100 dark:border-gray-800">
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Patient</th>
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Item</th>
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
@@ -179,10 +200,10 @@ export default function ManagePayments() {
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className="block md:table-row-group space-y-4 md:space-y-0 md:divide-y divide-gray-100 dark:divide-gray-800 pt-4 md:pt-0">
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-5 py-16 text-center">
+                <tr className="block md:table-row bg-white dark:bg-gray-900 rounded-lg shadow-sm md:shadow-none border border-gray-200 dark:border-gray-800 md:border-none">
+                  <td colSpan={6} className="block md:table-cell px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500">
                       <div className="w-6 h-6 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
                       <span className="text-sm">Loading transactions…</span>
@@ -190,40 +211,45 @@ export default function ManagePayments() {
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-5 py-14 text-center text-sm text-gray-400 dark:text-gray-500">
+                <tr className="block md:table-row bg-white dark:bg-gray-900 rounded-lg shadow-sm md:shadow-none border border-gray-200 dark:border-gray-800 md:border-none">
+                  <td colSpan={6} className="block md:table-cell px-5 py-14 text-center text-sm text-gray-400 dark:text-gray-500">
                     No transactions found
                   </td>
                 </tr>
               ) : (
                 paginated.map((p) => (
-                  <tr key={p._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                  <tr key={p._id} className="block md:table-row bg-white dark:bg-gray-900 rounded-lg shadow-sm md:shadow-none border border-gray-200 dark:border-gray-800 md:border-none hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition p-2 md:p-0 md:border-b md:border-gray-100 dark:md:border-gray-800">
                     {/* Patient */}
-                    <td className="px-5 py-3.5">
-                      <p className="font-medium text-gray-800 dark:text-gray-100">
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-3.5 border-b border-gray-100 dark:border-gray-800 md:border-none">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Patient</span>
+                      <p className="font-medium text-gray-800 dark:text-gray-100 text-right md:text-left">
                         {apptMap[p.appointmentId]?.patientName || <span className="text-gray-400">—</span>}
                       </p>
                     </td>
                     {/* Item */}
-                    <td className="px-5 py-3.5">
-                      <p className="font-medium text-gray-800 dark:text-gray-100">{p.itemName || 'Consultation Fee'}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">{shortId(p.appointmentId)}</p>
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-3.5 border-b border-gray-100 dark:border-gray-800 md:border-none">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Item</span>
+                      <p className="font-medium text-gray-800 dark:text-gray-100 text-right md:text-left">{p.itemName || 'Consultation Fee'}</p>
                     </td>
                     {/* Amount */}
-                    <td className="px-5 py-3.5 whitespace-nowrap font-semibold text-gray-800 dark:text-gray-100">
-                      {formatAmount(p.amount, p.currency)}
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-3.5 whitespace-nowrap border-b border-gray-100 dark:border-gray-800 md:border-none">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</span>
+                      <span className="font-semibold text-gray-800 dark:text-gray-100 text-right md:text-left">{formatAmount(p.amount, p.currency)}</span>
                     </td>
                     {/* Method */}
-                    <td className="px-5 py-3.5 capitalize text-gray-600 dark:text-gray-300">
-                      {p.stripePaymentMethod || '—'}
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-3.5 capitalize text-gray-600 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800 md:border-none">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Method</span>
+                      <span className="text-right md:text-left">{p.stripePaymentMethod || '—'}</span>
                     </td>
                     {/* Status */}
-                    <td className="px-5 py-3.5">
-                      <Badge label={p.status} style={STATUS_STYLES[p.status] || 'bg-gray-100 text-gray-600'} />
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-3.5 border-b border-gray-100 dark:border-gray-800 md:border-none">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</span>
+                      <Badge label={p.status} style={`${STATUS_STYLES[p.status] || 'bg-gray-100 text-gray-600'} text-right md:text-left`} />
                     </td>
                     {/* Date */}
-                    <td className="px-5 py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                      {formatDate(p.createdAt)}
+                    <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-3.5 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</span>
+                      <span className="text-right md:text-left">{formatDate(p.createdAt)}</span>
                     </td>
                   </tr>
                 ))
@@ -232,44 +258,14 @@ export default function ManagePayments() {
           </table>
         </div>
 
-        {/* Pagination footer */}
-        <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between gap-4">
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            {filtered.length === 0
-              ? '0'
-              : `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)}`}{' '}
-            of {filtered.length} transaction{filtered.length !== 1 ? 's' : ''}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-            >
-              ← Prev
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-              <button
-                key={n}
-                onClick={() => setPage(n)}
-                className={`w-8 h-8 text-xs font-medium rounded-md border transition ${
-                  n === page
-                    ? 'border-indigo-600 bg-indigo-600 text-white'
-                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-            >
-              Next →
-            </button>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          onPageChange={setPage}
+          label="transaction"
+          pageSize={PAGE_SIZE}
+        />
       </div>
     </div>
   );

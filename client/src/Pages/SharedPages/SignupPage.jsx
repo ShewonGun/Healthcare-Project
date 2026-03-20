@@ -1,27 +1,24 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../utils/api';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../Context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { FiActivity, FiSun, FiMoon } from 'react-icons/fi';
 
 const ROLES = [
   { value: 'patient', label: 'Patient' },
   { value: 'doctor',  label: 'Doctor' },
-  { value: 'admin',   label: 'Admin' },
 ];
 
 const DASHBOARD = {
   patient: '/patient/dashboard',
   doctor:  '/doctor/dashboard',
-  admin:   '/admin/dashboard',
 };
 
 /* Fields shown per role */
 const ROLE_FIELDS = {
   patient: ['firstName', 'lastName', 'email', 'password'],
   doctor:  ['firstName', 'lastName', 'email', 'password'],
-  admin:   ['name', 'email', 'password'],
 };
 
 const FIELD_META = {
@@ -35,7 +32,6 @@ const FIELD_META = {
 const ROLE_BADGES = {
   patient: 'Access appointments, medical records & payments.',
   doctor:  'Manage your schedule, patients & consultations.',
-  admin:   'Oversee users, doctors & platform operations.',
 };
 
 const SignupPage = () => {

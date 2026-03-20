@@ -1,6 +1,6 @@
 import express from 'express';
 import { getProfile, updateProfile, changePassword, verifyToken } from '../controllers/authController.js';
-import { getAllPatients, getAllDoctors, getAllAdmins, verifyDoctor } from '../controllers/adminController.js';
+import { getAllPatients, getAllDoctors, getAllAdmins, verifyDoctor, deleteAdmin } from '../controllers/adminController.js';
 import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -17,6 +17,7 @@ router.get('/verify', verifyToken);
 router.get('/users/patients', protect, getAllPatients);
 router.get('/users/doctors',  protect, getAllDoctors);
 router.get('/users/admins',   protect, getAllAdmins);
+router.delete('/users/admins/:id', protect, deleteAdmin);
 router.put('/users/doctors/:id/verify', protect, verifyDoctor);
 
 export default router;

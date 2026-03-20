@@ -5,11 +5,13 @@ import { FiCalendar, FiSearch } from 'react-icons/fi';
 import AppointmentCard, { isToday, isUpcoming } from '../../Componets/DoctorComponents/AppointmentCard';
 
 const TABS = [
-  { key: 'all',       label: 'All' },
-  { key: 'pending',   label: 'Pending' },
-  { key: 'confirmed', label: 'Confirmed' },
-  { key: 'completed', label: 'Completed' },
-  { key: 'cancelled', label: 'Cancelled' },
+  { key: 'all',           label: 'All' },
+  { key: 'pending',       label: 'Pending' },
+  { key: 'confirmed',     label: 'Confirmed' },
+  { key: 'completed',     label: 'Completed' },
+  { key: 'cancelled',     label: 'Cancelled' },
+  { key: 'no_show',       label: 'No Show' },
+  { key: 'not_responded', label: 'Not Responded' },
 ];
 
 

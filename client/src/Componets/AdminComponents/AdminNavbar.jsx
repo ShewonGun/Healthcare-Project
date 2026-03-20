@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../Context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import AdminSidebar from './AdminSidebar';
-import { FiMenu, FiSun, FiMoon, FiChevronDown, FiLogOut } from 'react-icons/fi';
+import { FiMenu, FiSun, FiMoon, FiChevronDown, FiLogOut, FiUser } from 'react-icons/fi';
 
 const AdminNavbar = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -87,7 +89,17 @@ const AdminNavbar = () => {
                         Administrator
                       </span>
                     </div>
-                    <div className="border-t border-gray-100 dark:border-gray-800 mt-1" />
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        navigate('/admin/profile');
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                    >
+                      <FiUser className="w-4 h-4" />
+                      Profile
+                    </button>
+                    <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
                     <button
                       onClick={() => { setDropdownOpen(false); logout(); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"

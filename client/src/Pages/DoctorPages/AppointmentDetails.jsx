@@ -1,15 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { appointmentAPI, paymentAPI, doctorAPI } from '../../utils/api';
 import { FiChevronLeft, FiCheck, FiEdit2, FiVideo, FiX, FiCalendar, FiUser, FiFileText, FiCreditCard, FiPaperclip, FiUpload, FiTrash2, FiExternalLink } from 'react-icons/fi';
+import CancelAppointmentModal from '../../Componets/DoctorComponents/CancelAppointmentModal';
+import NotesModal from '../../Componets/DoctorComponents/NotesModal';
+import PrescriptionModal from '../../Componets/DoctorComponents/PrescriptionModal';
+import StatusUpdateModal from '../../Componets/DoctorComponents/StatusUpdateModal';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+//Helpers
 const STATUS_STYLES = {
-  pending:   'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  confirmed: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  cancelled: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
-  no_show:   'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  pending:       'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  confirmed:     'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  completed:     'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  cancelled:     'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+  no_show:       'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  not_responded: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
 };
 
 const PAYMENT_STYLES = {
@@ -24,7 +29,7 @@ const formatDate = (iso) =>
 const formatCreated = (iso) =>
   new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-// ── InfoRow ───────────────────────────────────────────────────────────────────
+// InfoRow 
 const InfoRow = ({ label, value, children }) => (
   <div className="flex flex-col sm:flex-row sm:items-start gap-1">
     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 sm:w-40 shrink-0 pt-0.5">
@@ -34,7 +39,7 @@ const InfoRow = ({ label, value, children }) => (
   </div>
 );
 
-// ── Section ───────────────────────────────────────────────────────────────────
+// Section
 const Section = ({ title, icon, children }) => (
   <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
     <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 dark:border-gray-800">
@@ -44,279 +49,6 @@ const Section = ({ title, icon, children }) => (
     <div className="px-5 py-4 space-y-3">{children}</div>
   </div>
 );
-
-// ── StatusUpdateModal ────────────────────────────────────────────────────────
-const StatusUpdateModal = ({ current, onClose, onSave, loading }) => {
-  const [status, setStatus] = useState(current === 'pending' ? 'confirmed' : 'completed');
-  const [notes, setNotes]   = useState('');
-
-  const options = [
-    { value: 'confirmed', label: 'Confirm',   desc: 'Accept this appointment' },
-    { value: 'completed', label: 'Complete',  desc: 'Mark as seen/done' },
-    { value: 'no_show',   label: 'No-show',   desc: 'Patient did not attend' },
-  ].filter(o => {
-    if (current === 'pending')   return o.value !== 'completed';
-    if (current === 'confirmed') return o.value !== 'confirmed';
-    return false;
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 dark:bg-black/70" />
-      <div
-        className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700 shadow-xl p-6"
-        onClick={e => e.stopPropagation()}
-      >
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Update Appointment Status</h3>
-
-        <div className="space-y-2 mb-4">
-          {options.map(o => (
-            <label
-              key={o.value}
-              className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition
-                ${status === o.value
-                  ? 'border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-            >
-              <input
-                type="radio"
-                name="status"
-                value={o.value}
-                checked={status === o.value}
-                onChange={() => setStatus(o.value)}
-                className="accent-indigo-600"
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{o.label}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">{o.desc}</p>
-              </div>
-            </label>
-          ))}
-        </div>
-
-        <div className="mb-5">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Notes <span className="text-gray-400 font-normal">(optional)</span>
-          </label>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={3}
-            placeholder="Add clinical notes or follow-up instructions..."
-            className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                       placeholder:text-gray-400 dark:placeholder:text-gray-500
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 rounded-md border border-gray-200 dark:border-gray-700 text-sm font-medium
-                       text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onSave(status, notes)}
-            disabled={loading}
-            className="flex-1 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold
-                       transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Saving…' : 'Save'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ── CancelModal ──────────────────────────────────────────────────────────────
-const CancelModal = ({ onClose, onConfirm, loading }) => {
-  const [reason, setReason] = useState('');
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 dark:bg-black/70" />
-      <div
-        className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700 shadow-xl p-6"
-        onClick={e => e.stopPropagation()}
-      >
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Cancel Appointment</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          The patient will be notified. This action cannot be undone.
-        </p>
-
-        <div className="mb-5">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Reason <span className="text-gray-400 font-normal">(optional)</span>
-          </label>
-          <textarea
-            value={reason}
-            onChange={e => setReason(e.target.value)}
-            rows={3}
-            placeholder="e.g. Doctor unavailable, emergency…"
-            className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                       placeholder:text-gray-400 dark:placeholder:text-gray-500
-                       focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 rounded-md border border-gray-200 dark:border-gray-700 text-sm font-medium
-                       text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-          >
-            Keep Appointment
-          </button>
-          <button
-            onClick={() => onConfirm(reason)}
-            disabled={loading}
-            className="flex-1 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-semibold
-                       transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Cancelling…' : 'Cancel Appointment'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ── NotesModal ───────────────────────────────────────────────────────────────
-const NotesModal = ({ initial, onClose, onSave, loading }) => {
-  const [notes, setNotes] = useState(initial || '');
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 dark:bg-black/70" />
-      <div
-        className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700 shadow-xl p-6"
-        onClick={e => e.stopPropagation()}
-      >
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Clinical Notes</h3>
-        <textarea
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          rows={6}
-          placeholder="Add clinical notes, observations, or follow-up instructions…"
-          className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600
-                     bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                     placeholder:text-gray-400 dark:placeholder:text-gray-500
-                     focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                     resize-none mb-4"
-        />
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 rounded-md border border-gray-200 dark:border-gray-700 text-sm font-medium
-                       text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onSave(notes)}
-            disabled={loading || !notes.trim()}
-            className="flex-1 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold
-                       transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Saving…' : 'Save Notes'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ── PrescriptionModal ────────────────────────────────────────────────────────
-const PrescriptionModal = ({ onClose, onSave, loading }) => {
-  const fileRef  = useRef(null);
-  const [file,  setFile]  = useState(null);
-  const [notes, setNotes] = useState('');
-  const [error, setError] = useState('');
-
-  const handleFile = (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
-    if (!allowed.includes(f.type)) { setError('Only JPG, PNG, WEBP, or PDF files are allowed.'); return; }
-    if (f.size > 10 * 1024 * 1024)  { setError('File must be under 10 MB.'); return; }
-    setError('');
-    setFile(f);
-  };
-
-  const handleSave = () => {
-    if (!file) { setError('Please select a file.'); return; }
-    const fd = new FormData();
-    fd.append('prescription', file);
-    if (notes.trim()) fd.append('notes', notes.trim());
-    onSave(fd);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 dark:bg-black/70" />
-      <div
-        className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700 shadow-xl p-6"
-        onClick={e => e.stopPropagation()}
-      >
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Upload Prescription</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Accepts JPG, PNG, WEBP, or PDF — max 10 MB.</p>
-
-        {/* File picker */}
-        <div
-          onClick={() => fileRef.current?.click()}
-          className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-md p-4 mb-3 text-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition"
-        >
-          <FiUpload className="w-5 h-5 mx-auto mb-1 text-gray-400" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {file ? file.name : 'Click to select file'}
-          </p>
-          <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" className="hidden" onChange={handleFile} />
-        </div>
-
-        {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
-
-        {/* Notes */}
-        <div className="mb-5">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Notes <span className="text-gray-400 font-normal">(optional)</span>
-          </label>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={3}
-            placeholder="Dosage instructions, follow-up notes…"
-            className="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                       placeholder:text-gray-400 dark:placeholder:text-gray-500
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 rounded-md border border-gray-200 dark:border-gray-700 text-sm font-medium
-                       text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="flex-1 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold
-                       transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Uploading…' : 'Upload'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const AppointmentDetails = () => {
@@ -508,7 +240,7 @@ const AppointmentDetails = () => {
         />
       )}
       {modal === 'cancel' && (
-        <CancelModal
+        <CancelAppointmentModal
           onClose={() => setModal(null)}
           onConfirm={handleCancel}
           loading={actionLoading}

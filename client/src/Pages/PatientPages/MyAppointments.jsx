@@ -11,7 +11,7 @@ const TABS = [
   { key: 'cancelled', label: 'Cancelled' },
 ];
 
-// ── Cancel modal ──────────────────────────────────────────────────────────────
+// Cancel modal
 const CancelModal = ({ appointment, onConfirm, onClose, loading }) => {
   const [reason, setReason] = useState('');
   return (
@@ -101,7 +101,7 @@ const MyAppointments = () => {
   const filtered = appointments.filter((a) => {
     if (activeTab === 'upcoming')  return isUpcoming(a);
     if (activeTab === 'completed') return a.status === 'completed';
-    if (activeTab === 'cancelled') return ['cancelled', 'no_show'].includes(a.status);
+    if (activeTab === 'cancelled') return ['cancelled', 'no_show', 'not_responded'].includes(a.status);
     return true;
   });
 
@@ -120,7 +120,7 @@ const MyAppointments = () => {
     all:       appointments.length,
     upcoming:  appointments.filter(isUpcoming).length,
     completed: appointments.filter((a) => a.status === 'completed').length,
-    cancelled: appointments.filter((a) => ['cancelled', 'no_show'].includes(a.status)).length,
+    cancelled: appointments.filter((a) => ['cancelled', 'no_show', 'not_responded'].includes(a.status)).length,
   };
 
   // ── Cancel handler ────────────────────────────────────────────────────────

@@ -10,7 +10,7 @@ const appointmentSchema = new mongoose.Schema(
     appointmentTime:{ type: String, required: true }, 
     duration:{ type: Number, default: 30 },    
     type: {type: String, enum: ['in_person', 'telemedicine'],default: 'in_person'},
-    status: {type: String, enum: ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'],default: 'pending' },
+    status: {type: String, enum: ['pending', 'confirmed', 'completed', 'cancelled', 'no_show', 'not_responded'],default: 'pending' },
     reason:{ type: String, default: null }, 
     notes:{ type: String, default: null },
     cancellationReason:{ type: String, default: null },

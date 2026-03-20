@@ -29,7 +29,7 @@ export const updateProfile = async (req, res) => {
 
     const {
       firstName, lastName, phone, gender, dateOfBirth,
-      specialization, qualifications, experience, consultationFee, address,
+      specialization, qualifications, description, licenseNumber, hospital, experience, consultationFee, address,
     } = req.body;
 
     if (firstName)                   doctor.firstName       = firstName;
@@ -39,6 +39,9 @@ export const updateProfile = async (req, res) => {
     if (dateOfBirth !== undefined)   doctor.dateOfBirth     = dateOfBirth;
     if (specialization)              doctor.specialization  = specialization;
     if (qualifications !== undefined) doctor.qualifications = qualifications;
+    if (description !== undefined)   doctor.description     = description;
+    if (licenseNumber !== undefined) doctor.licenseNumber   = licenseNumber;
+    if (hospital !== undefined)      doctor.hospital        = hospital;
     if (experience !== undefined)    doctor.experience      = experience;
     if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
     if (address) {

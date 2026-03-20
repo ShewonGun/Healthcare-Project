@@ -132,7 +132,7 @@ const AdminDashboard = () => {
               {recentDoctors.map((doc) => (
                 <button
                   key={doc._id}
-                  onClick={() => navigate(`/admin/doctors/${doc._id}`)}
+                  onClick={() => navigate('/admin/doctors')}
                   className="w-full flex items-center justify-between py-2 px-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition text-left"
                 >
                   <div className="flex items-center gap-3 min-w-0">

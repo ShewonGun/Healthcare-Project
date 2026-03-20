@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doctorAPI, appointmentAPI, reportAPI } from '../../utils/api';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../Context/AuthContext';
 import { FiHome, FiVideo, FiCheck, FiCreditCard, FiChevronLeft, FiAlertCircle, FiCalendar, FiClock } from 'react-icons/fi';
 
 // ── Time slot generator (8 am → 6 pm, 30-min steps) ────────────────────────
@@ -18,7 +18,7 @@ const generateTimeSlots = () => {
 };
 
 const TIME_SLOTS = generateTimeSlots();
-const DURATIONS  = [30, 45, 60];
+const DEFAULT_DURATION = 30;
 const TYPES = [
   { value: 'in_person',     label: 'In-Person',     Icon: FiHome },
   { value: 'telemedicine',  label: 'Telemedicine',  Icon: FiVideo },
@@ -51,7 +51,6 @@ const MakeAppointment = () => {
   const [date,     setDate]     = useState('');
   const [time,     setTime]     = useState('');
   const [type,     setType]     = useState('in_person');
-  const [duration, setDuration] = useState(30);
   const [reason,   setReason]   = useState('');
 
   // Reports
@@ -106,7 +105,7 @@ const MakeAppointment = () => {
         patientName,
         appointmentDate: date,
         appointmentTime: time,
-        duration,
+        duration: DEFAULT_DURATION,
         type,
         reason: reason.trim() || null,
         attachedReports,
@@ -287,27 +286,6 @@ const MakeAppointment = () => {
                 </div>
               </div>
 
-              {/* Duration */}
-              <div>
-                <Label>Duration</Label>
-                <div className="flex gap-2">
-                  {DURATIONS.map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDuration(d)}
-                      className={`px-4 py-2 rounded-md border text-sm font-medium transition ${
-                        duration === d
-                          ? 'bg-indigo-600 border-indigo-600 text-white'
-                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-indigo-400 dark:hover:border-indigo-600'
-                      }`}
-                    >
-                      {d} min
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Reason */}
               <div>
                 <Label>Reason for visit <span className="normal-case text-gray-400 dark:text-gray-600 font-normal">(optional)</span></Label>
@@ -423,7 +401,7 @@ const MakeAppointment = () => {
                 label="Type" value={TYPES.find((t) => t.value === type)?.label} />
 
               <SummaryRow Icon={FiClock}
-                label="Duration" value={`${duration} minutes`} />
+                label="Duration" value={`${DEFAULT_DURATION} minutes`} />
 
               {!doctor?.isAvailable && (
                 <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-md px-3 py-2">

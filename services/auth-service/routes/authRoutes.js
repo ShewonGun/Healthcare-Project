@@ -4,6 +4,7 @@ import {
   loginPatient,    loginDoctor,    loginAdmin,
   logout, verifyToken,
 } from '../controllers/authController.js';
+import { protect, requireAdmin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.post('/doctor/register', registerDoctor);
 router.post('/doctor/login',    loginDoctor);
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
-router.post('/admin/register', registerAdmin);
+router.post('/admin/register', protect, requireAdmin, registerAdmin);
 router.post('/admin/login',    loginAdmin);
 
 // ── Shared ────────────────────────────────────────────────────────────────────

@@ -60,3 +60,24 @@ export const verifyDoctor = async (req, res) => {
     res.status(status).json({ success: false, message });
   }
 };
+
+// DELETE /api/admin/users/admins/:id
+export const deleteAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (id === req.user.id) {
+      return res.status(400).json({ success: false, message: 'You cannot delete your own account' });
+    }
+
+    const admin = await Admin.findById(id);
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    await Admin.findByIdAndDelete(id);
+    return res.json({ success: true, message: 'Admin deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};

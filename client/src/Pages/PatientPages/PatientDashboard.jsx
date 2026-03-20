@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../Context/AuthContext';
 import { patientAPI, appointmentAPI, reportAPI, paymentAPI } from '../../utils/api';
 import {
   FiCalendar, FiFileText, FiDollarSign, FiActivity,
@@ -17,17 +17,21 @@ const greeting = () => {
 };
 
 const STATUS_STYLE = {
-  pending:   'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400',
-  confirmed: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400',
-  completed: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400',
-  cancelled: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400',
+  pending:       'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400',
+  confirmed:     'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400',
+  completed:     'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400',
+  cancelled:     'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400',
+  no_show:       'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400',
+  not_responded: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400',
 };
 
 const STATUS_ICON = {
-  pending:   <FiClock className="w-3.5 h-3.5" />,
-  confirmed: <FiCheckCircle className="w-3.5 h-3.5" />,
-  completed: <FiCheckCircle className="w-3.5 h-3.5" />,
-  cancelled: <FiXCircle className="w-3.5 h-3.5" />,
+  pending:       <FiClock className="w-3.5 h-3.5" />,
+  confirmed:     <FiCheckCircle className="w-3.5 h-3.5" />,
+  completed:     <FiCheckCircle className="w-3.5 h-3.5" />,
+  cancelled:     <FiXCircle className="w-3.5 h-3.5" />,
+  no_show:       <FiXCircle className="w-3.5 h-3.5" />,
+  not_responded: <FiClock className="w-3.5 h-3.5" />,
 };
 
 const fmt = (iso) =>
@@ -260,7 +264,7 @@ const PatientDashboard = () => {
                     <div className="flex items-center gap-2 shrink-0 ml-3">
                       <span className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded border ${STATUS_STYLE[status] || STATUS_STYLE.pending}`}>
                         {STATUS_ICON[status]}
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        {(status.charAt(0).toUpperCase() + status.slice(1)).replace('_', ' ')}
                       </span>
                       <FiArrowRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
                     </div>
