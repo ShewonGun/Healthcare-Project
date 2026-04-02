@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { toast } from 'react-hot-toast';
 import { FiSun, FiMoon, FiChevronLeft } from 'react-icons/fi';
 import { FaHeartbeat } from 'react-icons/fa';
 
@@ -40,12 +39,10 @@ const LoginPage = () => {
       // Inject role for patient/doctor services (they don't return `role` directly)
       if (!data.role) data.role = role;
       saveUser(data);
-      toast.success('Login successful.');
       navigate(DASHBOARD[role]);
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Please try again.';
       setError(msg);
-      toast.error(msg);
     } finally {
       setLoading(false);
     }

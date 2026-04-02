@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 // Base URL is empty so Vite proxy forwards /api → http://localhost:3000
 const api = axios.create({
@@ -18,6 +19,55 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Global action toasts for mutating requests
+const MUTATING_METHODS = new Set(["post", "put", "patch", "delete"]);
+let lastToastKey = "";
+let lastToastAt = 0;
+
+const showToastDeduped = (type, message) => {
+  const normalized = String(message || "").trim();
+  if (!normalized) return;
+  const key = `${type}:${normalized}`;
+  const now = Date.now();
+
+  // Prevent near-instant duplicate toasts from mixed local+global handlers.
+  if (key === lastToastKey && now - lastToastAt < 1200) return;
+
+  lastToastKey = key;
+  lastToastAt = now;
+
+  if (type === "success") toast.success(normalized);
+  else toast.error(normalized);
+};
+
+api.interceptors.response.use(
+  (response) => {
+    const method = (response.config?.method || "").toLowerCase();
+    const shouldToast = MUTATING_METHODS.has(method);
+
+    if (shouldToast) {
+      const successMessage = response.data?.message || "Action completed successfully.";
+      showToastDeduped("success", successMessage);
+    }
+
+    return response;
+  },
+  (error) => {
+    const method = (error.config?.method || "").toLowerCase();
+    const shouldToast = MUTATING_METHODS.has(method);
+
+    if (shouldToast) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Action failed. Please try again.";
+      showToastDeduped("error", errorMessage);
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // ── Auth endpoints ────────────────────────────────────────────────────────────
 export const authAPI = {
