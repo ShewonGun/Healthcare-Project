@@ -6,9 +6,11 @@ import {
   getAppointmentById,
   updateAppointmentStatus,
   cancelAppointment,
+  deleteCancelledAppointment,
   addNotes,
   getAllAppointments,
   updatePaymentStatus,
+  markPaymentCash,
   markPaymentPaid,
   uploadPrescription,
   deletePrescription,
@@ -24,6 +26,7 @@ router.get('/admin/all', protect, requireRole('admin'), getAllAppointments);
 // Patient routes
 router.post('/', protect, requireRole('patient'), bookAppointment);
 router.get('/my', protect, requireRole('patient'), getMyAppointmentsAsPatient);
+router.delete('/:id', protect, requireRole('patient'), deleteCancelledAppointment);
 
 // Doctor routes
 router.get('/doctor/my', protect, requireRole('doctor'), getMyAppointmentsAsDoctor);
@@ -38,6 +41,7 @@ router.put('/:id/cancel', protect, cancelAppointment);
 
 // Patient: mark own appointment paid after Stripe confirms
 router.put('/:id/mark-paid', protect, requireRole('patient'), markPaymentPaid);
+router.put('/:id/mark-cash', protect, requireRole('patient'), markPaymentCash);
 
 // Internal — called by payment-service only
 router.put('/:id/payment-status', serviceAuth, updatePaymentStatus);

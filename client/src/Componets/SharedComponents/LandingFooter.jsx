@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FiActivity } from 'react-icons/fi';
+import { FaHeartbeat } from 'react-icons/fa';
 
 const LandingFooter = () => (
   <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-8">
@@ -8,7 +8,7 @@ const LandingFooter = () => (
       {/* Logo */}
       <div className="flex items-center gap-2 font-bold text-indigo-600 dark:text-indigo-400 text-base">
         <div className="w-7 h-7 bg-indigo-600 dark:bg-indigo-500 rounded-md flex items-center justify-center">
-          <FiActivity className="w-4 h-4 text-white" />
+          <FaHeartbeat className="w-4 h-4 text-white" />
         </div>
         MediConnect
       </div>

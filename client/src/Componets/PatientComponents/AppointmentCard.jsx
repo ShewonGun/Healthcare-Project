@@ -31,7 +31,7 @@ export const isUpcoming = (a) => ['pending', 'confirmed'].includes(a.status);
 export const isCancellable = (a) => ['pending', 'confirmed'].includes(a.status);
 
 // ── Appointment card ──────────────────────────────────────────────────────────
-const AppointmentCard = ({ appt, onCancel, navigate }) => {
+const AppointmentCard = ({ appt, onCancel, onDeleteCancelled, deletingId, navigate }) => {
   const cfg = STATUS_CONFIG[appt.status] || STATUS_CONFIG.pending;
   const TypeIcon = TYPE_ICONS[appt.type] || FiHome;
 
@@ -57,6 +57,11 @@ const AppointmentCard = ({ appt, onCancel, navigate }) => {
         {appt.paymentStatus === 'paid' && (
           <span className="shrink-0 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded">
             Paid
+          </span>
+        )}
+        {appt.paymentStatus !== 'paid' && appt.cashPaymentRequested && (
+          <span className="shrink-0 text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded">
+            Cash Selected
           </span>
         )}
       </div>
@@ -132,77 +137,86 @@ const AppointmentCard = ({ appt, onCancel, navigate }) => {
       )}
 
       {/* Actions */}
-      {(isCancellable(appt) || appt.status === 'completed') && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-gray-100 dark:border-gray-800 pt-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-gray-100 dark:border-gray-800 pt-3">
 
-          {/* View Details */}
+        {/* View Details */}
+        <button
+          onClick={() => navigate(`/patient/appointments/${appt._id}`)}
+          className="flex items-center gap-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 px-2.5 py-1 rounded transition"
+        >
+          <FiExternalLink className="w-3.5 h-3.5" />
+          View Details
+        </button>
+
+        {/* Pay Now — for active appointments not yet paid */}
+        {isCancellable(appt) && appt.paymentStatus !== 'paid' && !appt.cashPaymentRequested && (
           <button
-            onClick={() => navigate(`/patient/appointments/${appt._id}`)}
-            className="flex items-center gap-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 px-2.5 py-1 rounded transition"
+            onClick={() => navigate(`/patient/payment/${appt._id}`)}
+            className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1 rounded transition"
           >
-            <FiExternalLink className="w-3.5 h-3.5" />
-            View Details
+            <FiCreditCard className="w-3.5 h-3.5" />
+            Pay Now
           </button>
+        )}
 
-          {/* Pay Now — for active appointments not yet paid */}
-          {isCancellable(appt) && appt.paymentStatus !== 'paid' && (
-            <button
-              onClick={() => navigate(`/patient/payment/${appt._id}`)}
-              className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1 rounded transition"
-            >
-              <FiCreditCard className="w-3.5 h-3.5" />
-              Pay Now
-            </button>
-          )}
+        {/* Join Session / Session Completed — telemedicine + paid */}
+        {appt.type === 'telemedicine' && appt.paymentStatus === 'paid' && appt.status === 'confirmed' && (
+          <button
+            onClick={() => navigate(`/patient/telemedicine/${appt._id}`)}
+            className="flex items-center gap-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded transition"
+          >
+            <FiVideo className="w-3.5 h-3.5" />
+            Join Session
+          </button>
+        )}
+        {appt.type === 'telemedicine' && appt.status === 'completed' && (
+          <span className="flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-2.5 py-1 rounded">
+            <FiCheck className="w-3.5 h-3.5" />
+            Session Completed
+          </span>
+        )}
 
-          {/* Join Session / Session Completed — telemedicine + paid */}
-          {appt.type === 'telemedicine' && appt.paymentStatus === 'paid' && appt.status === 'confirmed' && (
-            <button
-              onClick={() => navigate(`/patient/telemedicine/${appt._id}`)}
-              className="flex items-center gap-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded transition"
-            >
-              <FiVideo className="w-3.5 h-3.5" />
-              Join Session
-            </button>
-          )}
-          {appt.type === 'telemedicine' && appt.status === 'completed' && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-2.5 py-1 rounded">
-              <FiCheck className="w-3.5 h-3.5" />
-              Session Completed
-            </span>
-          )}
+        {/* View Doctor */}
+        {isCancellable(appt) && appt.doctorId && (
+          <button
+            onClick={() => navigate(`/patient/doctors/${appt.doctorId}`)}
+            className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            View Doctor
+          </button>
+        )}
 
-          {/* View Doctor */}
-          {isCancellable(appt) && appt.doctorId && (
-            <button
-              onClick={() => navigate(`/patient/doctors/${appt.doctorId}`)}
-              className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
-              View Doctor
-            </button>
-          )}
+        {/* Book Again */}
+        {appt.status === 'completed' && appt.doctorId && (
+          <button
+            onClick={() => navigate(`/patient/appointments/book/${appt.doctorId}`)}
+            className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Book Again
+          </button>
+        )}
 
-          {/* Book Again */}
-          {appt.status === 'completed' && appt.doctorId && (
-            <button
-              onClick={() => navigate(`/patient/appointments/book/${appt.doctorId}`)}
-              className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
-              Book Again
-            </button>
-          )}
+        {/* Cancel */}
+        {isCancellable(appt) && (
+          <button
+            onClick={() => onCancel(appt)}
+            className="ml-auto text-xs font-medium text-red-500 dark:text-red-400 hover:underline"
+          >
+            Cancel
+          </button>
+        )}
 
-          {/* Cancel */}
-          {isCancellable(appt) && (
-            <button
-              onClick={() => onCancel(appt)}
-              className="ml-auto text-xs font-medium text-red-500 dark:text-red-400 hover:underline"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      )}
+        {/* Delete cancelled appointment */}
+        {appt.status === 'cancelled' && (
+          <button
+            onClick={() => onDeleteCancelled(appt)}
+            disabled={deletingId === appt._id}
+            className="ml-auto text-xs font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {deletingId === appt._id ? 'Deleting...' : 'Delete'}
+          </button>
+        )}
+      </div>
     </div>
   );
 };

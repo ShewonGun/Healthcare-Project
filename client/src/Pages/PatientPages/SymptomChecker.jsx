@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { aiAPI } from '../../utils/api';
 import { FiUser, FiEye, FiTrash2, FiAlertCircle, FiZap } from 'react-icons/fi';
 import SymptomModal, { URGENCY, LIKELIHOOD_BADGE } from '../../Componets/PatientComponents/SymptomModal';
+import DeleteConfirmModal from '../../Componets/SharedComponents/DeleteConfirmModal';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const formatDate = (iso) => {
@@ -134,7 +135,7 @@ const HistoryItem = ({ item, onDelete, onView }) => {
             <FiEye className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onDelete(item._id)}
+            onClick={() => onDelete(item)}
             className="p-1.5 rounded text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
             title="Delete"
           >
@@ -159,6 +160,8 @@ const SymptomChecker = () => {
   const [histLoading, setHistLoading]= useState(true);
   const [activeTab, setActiveTab]   = useState('checker'); // 'checker' | 'history'
   const [viewItem, setViewItem]     = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deletingId, setDeletingId] = useState('');
 
   // Load history on mount
   useEffect(() => {
@@ -204,13 +207,18 @@ const SymptomChecker = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget?._id) return;
+    setDeletingId(deleteTarget._id);
     try {
-      await aiAPI.deleteCheck(id);
-      setHistory((prev) => prev.filter((h) => h._id !== id));
-      if (viewItem?._id === id) setViewItem(null);
+      await aiAPI.deleteCheck(deleteTarget._id);
+      setHistory((prev) => prev.filter((h) => h._id !== deleteTarget._id));
+      if (viewItem?._id === deleteTarget._id) setViewItem(null);
+      setDeleteTarget(null);
     } catch {
       // ignore
+    } finally {
+      setDeletingId('');
     }
   };
 
@@ -367,6 +375,18 @@ const SymptomChecker = () => {
       {/* ── View Modal ───────────────────────────────────────────────────────── */}
       <SymptomModal item={viewItem} onClose={() => setViewItem(null)} />
 
+      {deleteTarget && (
+        <DeleteConfirmModal
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteConfirm}
+          loading={deletingId === deleteTarget._id}
+          title="Delete symptom check?"
+          message="This symptom check will be permanently deleted from your history. This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Keep"
+        />
+      )}
+
       {/* ── History Tab ─────────────────────────────────────────────────────── */}
       {activeTab === 'history' && (
         <div>
@@ -386,7 +406,7 @@ const SymptomChecker = () => {
                 <HistoryItem
                   key={item._id}
                   item={item}
-                  onDelete={handleDelete}
+                  onDelete={setDeleteTarget}
                   onView={setViewItem}
                 />
               ))}

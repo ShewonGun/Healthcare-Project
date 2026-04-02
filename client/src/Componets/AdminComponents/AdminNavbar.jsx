@@ -4,6 +4,7 @@ import { useAuth } from '../../Context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import AdminSidebar from './AdminSidebar';
 import { FiMenu, FiSun, FiMoon, FiChevronDown, FiLogOut, FiUser } from 'react-icons/fi';
+import { FaHeartbeat } from 'react-icons/fa';
 
 const AdminNavbar = () => {
   const { user, logout } = useAuth();
@@ -47,7 +48,12 @@ const AdminNavbar = () => {
             <FiMenu className="w-5 h-5" />
           </button>
 
-          <div className="lg:hidden font-bold text-indigo-600 dark:text-indigo-400 text-base">MediConnect</div>
+          <div className="lg:hidden flex items-center gap-2 font-bold text-indigo-600 dark:text-indigo-400 text-base">
+            <span className="inline-flex w-6 h-6 items-center justify-center rounded-md bg-indigo-600 dark:bg-indigo-500">
+              <FaHeartbeat className="w-3.5 h-3.5 text-white" />
+            </span>
+            MediConnect
+          </div>
 
           <div className="flex items-center gap-2 ml-auto">
             {/* Theme toggle */}

@@ -307,6 +307,31 @@ export const cancelAppointment = async (req, res) => {
   }
 };
 
+// Patient: Delete own cancelled appointment
+export const deleteCancelledAppointment = async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    if (appointment.patientId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    if (appointment.status !== 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Only cancelled appointments can be deleted' });
+    }
+
+    await appointment.deleteOne();
+
+    res.json({ success: true, message: 'Cancelled appointment deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Doctor: Add/update notes on a completed appointment
 export const addNotes = async (req, res) => {
   try {
@@ -364,6 +389,33 @@ export const updatePaymentStatus = async (req, res) => {
     await appointment.save();
 
     res.json({ success: true, message: 'Payment status updated', data: appointment });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Patient: mark own appointment as cash payment (pay at hospital/clinic)
+export const markPaymentCash = async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    if (appointment.patientId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    if (appointment.paymentStatus === 'paid') {
+      return res.status(400).json({ success: false, message: 'Appointment is already paid' });
+    }
+
+    appointment.paymentMethod = 'cash';
+    appointment.cashPaymentRequested = true;
+    await appointment.save();
+
+    res.json({ success: true, message: 'Marked as cash payment', data: appointment });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

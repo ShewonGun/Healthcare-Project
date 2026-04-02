@@ -6,6 +6,7 @@ import CancelAppointmentModal from '../../Componets/DoctorComponents/CancelAppoi
 import NotesModal from '../../Componets/DoctorComponents/NotesModal';
 import PrescriptionModal from '../../Componets/DoctorComponents/PrescriptionModal';
 import StatusUpdateModal from '../../Componets/DoctorComponents/StatusUpdateModal';
+import DeleteConfirmModal from '../../Componets/SharedComponents/DeleteConfirmModal';
 
 //Helpers
 const STATUS_STYLES = {
@@ -62,7 +63,7 @@ const AppointmentDetails = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast]       = useState('');
 
-  const [modal, setModal] = useState(null); // 'status' | 'cancel' | 'notes' | 'prescription'
+  const [modal, setModal] = useState(null); // 'status' | 'cancel' | 'notes' | 'prescription' | 'delete-prescription'
 
   // Load appointment — payment status comes directly from appointment DB
   useEffect(() => {
@@ -259,6 +260,17 @@ const AppointmentDetails = () => {
           onClose={() => setModal(null)}
           onSave={handleUploadPrescription}
           loading={actionLoading}
+        />
+      )}
+      {modal === 'delete-prescription' && (
+        <DeleteConfirmModal
+          onClose={() => setModal(null)}
+          onConfirm={handleDeletePrescription}
+          loading={actionLoading}
+          title="Delete prescription?"
+          message="The uploaded prescription will be permanently removed from this appointment. This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Keep"
         />
       )}
 
@@ -507,7 +519,7 @@ const AppointmentDetails = () => {
                   View Prescription
                 </a>
                 <button
-                  onClick={handleDeletePrescription}
+                  onClick={() => setModal('delete-prescription')}
                   disabled={actionLoading}
                   title="Delete prescription"
                   className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40"

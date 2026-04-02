@@ -219,6 +219,9 @@ const PaymentCheckout = () => {
 
   const [paid,       setPaid]       = useState(false);
   const [paidAmount, setPaidAmount] = useState(0);
+  const [cashMarked, setCashMarked] = useState(false);
+  const [cashSaving, setCashSaving] = useState(false);
+  const [cashError, setCashError] = useState('');
 
   useEffect(() => {
     appointmentAPI.getById(appointmentId)
@@ -233,6 +236,21 @@ const PaymentCheckout = () => {
   const handleSuccess = (lkr) => {
     setPaidAmount(lkr);
     setPaid(true);
+  };
+
+  const handleMarkCash = async () => {
+    if (!appointment?._id) return;
+    setCashError('');
+    setCashSaving(true);
+    try {
+      const { data } = await appointmentAPI.markCash(appointment._id);
+      setAppointment(data.data);
+      setCashMarked(true);
+    } catch (err) {
+      setCashError(err.response?.data?.message || 'Failed to mark as cash payment.');
+    } finally {
+      setCashSaving(false);
+    }
   };
 
   // ── Loading / error states ────────────────────────────────────────────────
@@ -309,6 +327,33 @@ const PaymentCheckout = () => {
     );
   }
 
+  if (cashMarked || appointment?.cashPaymentRequested) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-5">
+          <FiCheck className="w-7 h-7 text-amber-600 dark:text-amber-400" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Cash Payment Selected</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          You chose to pay in cash at the clinic/hospital. Online card payment is not required now.
+        </p>
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-5 text-left space-y-3 mb-6">
+          <Row label="Appointment" value={`${formatDate(appointment.appointmentDate)} · ${formatTime(appointment.appointmentTime)}`} />
+          <Row label="Doctor"      value={appointment.doctorName ? `Dr. ${appointment.doctorName}` : '—'} />
+          <Row label="Type"        value={appointment.type === 'telemedicine' ? 'Telemedicine' : 'In-Person'} />
+          <Row label="Method"      value="Cash" />
+          <Row label="Amount" value={formatLkr(amountLkr)} />
+        </div>
+        <button
+          onClick={() => navigate('/patient/appointments')}
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition"
+        >
+          My Appointments
+        </button>
+      </div>
+    );
+  }
+
   // ── Checkout form ──────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -362,6 +407,22 @@ const PaymentCheckout = () => {
               <Elements stripe={stripePromise}>
                 <StripeForm appointment={appointment} amountLkr={amountLkr} onSuccess={handleSuccess} />
               </Elements>
+
+              <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={handleMarkCash}
+                  disabled={cashSaving}
+                  className="w-full py-2.5 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-md text-sm font-semibold transition disabled:opacity-60"
+                >
+                  {cashSaving ? 'Saving...' : 'Mark as Cash Payment'}
+                </button>
+                {cashError && (
+                  <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2.5 mt-3">
+                    {cashError}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

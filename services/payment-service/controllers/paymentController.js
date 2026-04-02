@@ -272,6 +272,8 @@ export const adminMarkCashPaid = async (req, res) => {
   try {
     const { appointmentId } = req.params;
     const { patientId = 'unknown', doctorId = 'unknown', amount = 0, amountLkr = 0 } = req.body;
+    const safeAmountLkr = Number(amountLkr) || 0;
+    const amountLkrCents = Math.max(0, Math.round(safeAmountLkr * 100));
 
     // Idempotent — don't double-complete
     const existing = await Payment.findOne({ appointmentId });
@@ -283,7 +285,10 @@ export const adminMarkCashPaid = async (req, res) => {
     if (existing) {
       existing.status              = 'completed';
       existing.stripePaymentMethod = 'cash';
-      if (amountLkr) existing.amountLkr = amountLkr;
+      existing.itemName            = 'Cash Payment';
+      existing.currency            = 'lkr';
+      existing.amountLkr           = safeAmountLkr;
+      existing.amount              = amountLkrCents;
       payment = await existing.save();
     } else {
       payment = await Payment.create({
@@ -292,9 +297,9 @@ export const adminMarkCashPaid = async (req, res) => {
         doctorId,
         stripePaymentIntentId: `cash_${appointmentId}`,
         stripeClientSecret:    'cash_na',
-        amount,
-        amountLkr,
-        currency: 'usd',
+        amount: amountLkrCents,
+        amountLkr: safeAmountLkr,
+        currency: 'lkr',
         status:   'completed',
         itemName: 'Cash Payment',
         stripePaymentMethod: 'cash',

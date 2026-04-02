@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { FiCalendar, FiUser, FiCheck, FiSun, FiMoon, FiChevronDown, FiLogOut, FiMenu, FiX, FiActivity } from 'react-icons/fi';
+import { FiCalendar, FiUser, FiCheck, FiSun, FiMoon, FiChevronDown, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import { MdDashboard } from 'react-icons/md';
+import { FaHeartbeat } from 'react-icons/fa';
 
 const NAV_LINKS = [
   {
@@ -48,7 +49,7 @@ const DoctorNavbar = () => {
             className="flex items-center gap-2 font-bold text-indigo-600 dark:text-indigo-400 text-lg"
           >
             <div className="w-8 h-8 bg-indigo-600 dark:bg-indigo-500 rounded-md flex items-center justify-center">
-              <FiActivity className="w-4 h-4 text-white" />
+              <FaHeartbeat className="w-4 h-4 text-white" />
             </div>
             <span className="hidden sm:block">MediConnect</span>
             <span className="text-xs font-medium text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded text-[10px] hidden sm:block">

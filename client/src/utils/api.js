@@ -41,6 +41,7 @@ export const patientAPI = {
 export const appointmentAPI = {
   // Patient
   markPaid: (id) => api.put(`/appointments/${id}/mark-paid`),
+  markCash: (id) => api.put(`/appointments/${id}/mark-cash`),
   book: (body) => api.post("/appointments", body),
   getMine: () => api.get("/appointments/my"),
   // Doctor
@@ -55,6 +56,7 @@ export const appointmentAPI = {
   // Shared
   getById: (id) => api.get(`/appointments/${id}`),
   cancel: (id, body) => api.put(`/appointments/${id}/cancel`, body),
+  deleteCancelled: (id) => api.delete(`/appointments/${id}`),
 };
 
 // ── Doctor endpoints ──────────────────────────────────────────────────────────

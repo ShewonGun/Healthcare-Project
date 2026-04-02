@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Context/AuthContext';
-import { FiGrid, FiUserCheck, FiUsers, FiShield, FiCalendar, FiCreditCard, FiLogOut, FiActivity } from 'react-icons/fi';
+import { FiGrid, FiUserCheck, FiUsers, FiShield, FiCalendar, FiCreditCard, FiLogOut } from 'react-icons/fi';
+import { FaHeartbeat } from 'react-icons/fa';
 
 const NAV_LINKS = [
   {
@@ -54,7 +55,7 @@ const AdminSidebar = ({ onClose }) => {
         className="flex items-center gap-2.5 px-5 py-3 border-b border-gray-200 dark:border-gray-800"
       >
         <div className="w-8 h-8 bg-indigo-600 dark:bg-indigo-500 rounded-md flex items-center justify-center shrink-0">
-          <FiActivity className="w-4 h-4 text-white" />
+          <FaHeartbeat className="w-4 h-4 text-white" />
         </div>
         <div className="text-left flex flex-row">
           <p className="font-bold text-sm text-gray-900 dark:text-white leading-tight">MediConnect</p>

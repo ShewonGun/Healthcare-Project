@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
-import { FiActivity, FiSun, FiMoon } from 'react-icons/fi';
+import { FiSun, FiMoon } from 'react-icons/fi';
+import { FaHeartbeat } from 'react-icons/fa';
 
 const LandingNav = () => {
   const { theme, toggleTheme } = useTheme();
@@ -12,7 +13,7 @@ const LandingNav = () => {
         {/* Logo */}
         <div className="flex items-center gap-2 font-bold text-indigo-600 dark:text-indigo-400 text-lg">
           <div className="w-8 h-8 bg-indigo-600 dark:bg-indigo-500 rounded-md flex items-center justify-center">
-            <FiActivity className="w-5 h-5 text-white" />
+            <FaHeartbeat className="w-5 h-5 text-white" />
           </div>
           MediConnect
         </div>

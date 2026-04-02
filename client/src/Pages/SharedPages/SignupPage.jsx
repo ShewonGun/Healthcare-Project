@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../utils/api';
-import { useAuth } from '../../Context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { FiActivity, FiSun, FiMoon } from 'react-icons/fi';
+import { FiSun, FiMoon, FiChevronLeft } from 'react-icons/fi';
+import { FaHeartbeat } from 'react-icons/fa';
 
 const ROLES = [
   { value: 'patient', label: 'Patient' },
@@ -81,6 +82,16 @@ const SignupPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center px-4 py-10">
 
+      {/* Back to landing */}
+      <Link
+        to="/"
+        className="fixed top-4 left-4 p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        title="Back to landing"
+        aria-label="Back to landing"
+      >
+        <FiChevronLeft className="w-4 h-4" />
+      </Link>
+
       {/* Theme toggle — top right */}
       <button
         onClick={toggleTheme}
@@ -95,7 +106,7 @@ const SignupPage = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-md mb-4">
-            <FiActivity className="w-6 h-6 text-white" />
+            <FaHeartbeat className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Create an account</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Join MediConnect</p>

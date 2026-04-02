@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { patientAPI } from '../../utils/api';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../Context/AuthContext';
 import { FiChevronDown, FiAlertCircle, FiCheck, FiX, FiEdit2, FiPlus } from 'react-icons/fi';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

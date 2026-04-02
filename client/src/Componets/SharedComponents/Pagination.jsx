@@ -9,6 +9,9 @@ const Pagination = ({
 	const safeTotalPages = Math.max(1, totalPages || 1);
 	const start = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
 	const end = totalItems === 0 ? 0 : Math.min(page * pageSize, totalItems);
+	const groupStart = Math.floor((page - 1) / 5) * 5 + 1;
+	const groupEnd = Math.min(groupStart + 4, safeTotalPages);
+	const visiblePages = Array.from({ length: groupEnd - groupStart + 1 }, (_, i) => groupStart + i);
 
 	return (
 		<div className="px-5 py-3 mt-4 md:mt-0 bg-white dark:bg-gray-900 rounded-lg md:rounded-none border border-gray-200 dark:border-gray-800 md:border-0 md:border-t flex items-center justify-between gap-4 shadow-sm md:shadow-none">
@@ -26,8 +29,8 @@ const Pagination = ({
 					← Prev
 				</button>
 
-				<div className="hidden sm:flex items-center gap-1">
-					{Array.from({ length: safeTotalPages }, (_, i) => i + 1).map((n) => (
+				<div className="flex items-center gap-1">
+					{visiblePages.map((n) => (
 						<button
 							key={n}
 							onClick={() => onPageChange(n)}

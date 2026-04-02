@@ -56,12 +56,12 @@ const baseTemplate = (title, body) => `
 </head>
 <body>
   <div class="container">
-    <div class="header"><h1>Healthcare Platform</h1></div>
+    <div class="header"><h1>Mediconnect</h1></div>
     <div class="body">
       <h2>${title}</h2>
       ${body}
     </div>
-    <div class="footer">© 2026 Healthcare Platform. This is an automated message.</div>
+    <div class="footer">© 2026 Mediconnect. This is an automated message.</div>
   </div>
 </body>
 </html>`;

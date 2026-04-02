@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../Context/AuthContext';
 import { doctorAPI, appointmentAPI, paymentAPI } from '../../utils/api';
 import { STATUS_CONFIG, formatDate, formatTime, isToday, isUpcoming } from '../../Componets/DoctorComponents/AppointmentCard';
 import {
@@ -161,7 +161,7 @@ const DoctorDashboard = () => {
       <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            {greeting()}, Dr. {firstName} 👋
+            {greeting()}, Dr. {firstName} !
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {todayAppts.length > 0

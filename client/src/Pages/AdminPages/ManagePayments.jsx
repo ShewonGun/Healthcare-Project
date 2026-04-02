@@ -28,11 +28,17 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function formatAmount(cents, currency = 'usd') {
+function formatLkr(amountLkr = 0) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency.toUpperCase(),
-  }).format(cents / 100);
+    currency: 'LKR',
+  }).format(Number(amountLkr || 0));
+}
+
+function getAmountLkr(payment) {
+  if (typeof payment?.amountLkr === 'number' && payment.amountLkr > 0) return payment.amountLkr;
+  if ((payment?.currency || '').toLowerCase() === 'lkr') return Number(payment.amount || 0) / 100;
+  return 0;
 }
 
 export default function ManagePayments() {
@@ -96,9 +102,9 @@ export default function ManagePayments() {
     return acc;
   }, {});
 
-  const totalRevenue = payments
-    .filter((p) => p.status === 'completed')
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalRevenueLkr = payments
+    .filter((p) => p.status === 'completed' && p.status !== 'refunded')
+    .reduce((sum, p) => sum + getAmountLkr(p), 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -115,7 +121,7 @@ export default function ManagePayments() {
             <div className="text-left sm:text-right hidden sm:block">
               <p className="text-xs text-gray-400 dark:text-gray-500">Total Revenue</p>
               <p className="text-base font-bold text-green-600 dark:text-green-400">
-                {formatAmount(totalRevenue)}
+                {formatLkr(totalRevenueLkr)}
               </p>
             </div>
             
@@ -139,7 +145,7 @@ export default function ManagePayments() {
           {/* Mobile Revenue Display */}
           <div className="sm:hidden flex w-full justify-between items-center bg-green-50 dark:bg-green-900/10 p-3 rounded-md border border-green-100 dark:border-green-900/20 order-1">
              <p className="text-sm text-green-700 dark:text-green-400 font-medium">Total Revenue</p>
-             <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatAmount(totalRevenue)}</p>
+             <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatLkr(totalRevenueLkr)}</p>
           </div>
         </div>
       </div>
@@ -234,7 +240,7 @@ export default function ManagePayments() {
                     {/* Amount */}
                     <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-3.5 whitespace-nowrap border-b border-gray-100 dark:border-gray-800 md:border-none">
                       <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</span>
-                      <span className="font-semibold text-gray-800 dark:text-gray-100 text-right md:text-left">{formatAmount(p.amount, p.currency)}</span>
+                      <span className="font-semibold text-gray-800 dark:text-gray-100 text-right md:text-left">{formatLkr(getAmountLkr(p))}</span>
                     </td>
                     {/* Method */}
                     <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-3.5 capitalize text-gray-600 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800 md:border-none">

@@ -34,8 +34,24 @@ const STATUS_ICON = {
   not_responded: <FiClock className="w-3.5 h-3.5" />,
 };
 
-const fmt = (iso) =>
-  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const fmt = (iso) => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const appointmentDateTime = (appt) => {
+  const date = appt?.appointmentDate;
+  const time = appt?.appointmentTime || '00:00';
+  if (!date) return Number.POSITIVE_INFINITY;
+
+  const dt = new Date(`${date}T${time}:00`);
+  if (!Number.isNaN(dt.getTime())) return dt.getTime();
+
+  const fallback = new Date(date);
+  return Number.isNaN(fallback.getTime()) ? Number.POSITIVE_INFINITY : fallback.getTime();
+};
 
 /* ── component ───────────────────────────────────────────────────────────── */
 const PatientDashboard = () => {
@@ -74,7 +90,7 @@ const PatientDashboard = () => {
   /* derived */
   const upcoming = appointments
     .filter((a) => ['pending', 'confirmed'].includes(a.status))
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .sort((a, b) => appointmentDateTime(a) - appointmentDateTime(b))
     .slice(0, 5);
 
   const totalPaid = payments
@@ -256,8 +272,8 @@ const PatientDashboard = () => {
                         </p>
                         <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-0.5">
                           <FiCalendar className="w-3 h-3" />
-                          {fmt(appt.date)}
-                          {appt.time && <> · {appt.time}</>}
+                          {fmt(appt.appointmentDate)}
+                          {appt.appointmentTime && <> · {appt.appointmentTime}</>}
                         </p>
                       </div>
                     </div>

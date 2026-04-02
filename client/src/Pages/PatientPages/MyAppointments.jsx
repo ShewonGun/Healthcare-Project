@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { appointmentAPI, paymentAPI } from '../../utils/api';
 import { FiPlus, FiAlertCircle, FiCalendar } from 'react-icons/fi';
 import AppointmentCard, { isUpcoming, isCancellable, formatDate, formatTime } from '../../Componets/PatientComponents/AppointmentCard';
+import DeleteConfirmModal from '../../Componets/SharedComponents/DeleteConfirmModal';
 
 const TABS = [
   { key: 'all',       label: 'All' },
@@ -69,6 +70,8 @@ const MyAppointments = () => {
   const [cancelTarget, setCancelTarget]   = useState(null);
   const [cancelling, setCancelling]       = useState(false);
   const [cancelError, setCancelError]     = useState('');
+  const [deleteTarget, setDeleteTarget]   = useState(null);
+  const [deletingId, setDeletingId]       = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -110,6 +113,10 @@ const MyAppointments = () => {
 
   // Pagination
   const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
+  const safeTotalPages = Math.max(1, totalPages);
+  const groupStart = Math.floor((currentPage - 1) / 5) * 5 + 1;
+  const groupEnd = Math.min(groupStart + 4, safeTotalPages);
+  const visiblePages = Array.from({ length: groupEnd - groupStart + 1 }, (_, i) => groupStart + i);
   const paginated  = sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   // Reset page when tab changes
@@ -140,6 +147,21 @@ const MyAppointments = () => {
     } catch (err) {
       setCancelError(err.response?.data?.message || 'Failed to cancel. Please try again.');
       setCancelling(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget?._id) return;
+    setCancelError('');
+    setDeletingId(deleteTarget._id);
+    try {
+      await appointmentAPI.deleteCancelled(deleteTarget._id);
+      setAppointments((prev) => prev.filter((a) => a._id !== deleteTarget._id));
+      setDeleteTarget(null);
+    } catch (err) {
+      setCancelError(err.response?.data?.message || 'Failed to delete cancelled appointment.');
+    } finally {
+      setDeletingId('');
     }
   };
 
@@ -233,6 +255,8 @@ const MyAppointments = () => {
               appt={appt}
               navigate={navigate}
               onCancel={(a) => { setCancelError(''); setCancelTarget(a); }}
+              onDeleteCancelled={(a) => setDeleteTarget(a)}
+              deletingId={deletingId}
             />
           ))}
         </div>
@@ -248,7 +272,7 @@ const MyAppointments = () => {
           >
             ← Prev
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          {visiblePages.map((page) => (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
@@ -262,8 +286,8 @@ const MyAppointments = () => {
             </button>
           ))}
           <button
-            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, safeTotalPages))}
+            disabled={currentPage === safeTotalPages}
             className="px-3 py-1.5 rounded-md text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             Next →
@@ -278,6 +302,18 @@ const MyAppointments = () => {
           onConfirm={handleCancelConfirm}
           onClose={() => { setCancelTarget(null); setCancelError(''); }}
           loading={cancelling}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteConfirmModal
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteConfirm}
+          loading={deletingId === deleteTarget._id}
+          title="Delete cancelled appointment?"
+          message="This cancelled appointment will be permanently removed from your list. This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Keep"
         />
       )}
     </div>

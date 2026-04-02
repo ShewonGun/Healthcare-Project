@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 import { telemedicineAPI, appointmentAPI } from '../../utils/api';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../Context/AuthContext';
 import { FiChevronLeft, FiUser, FiMic, FiMicOff, FiVideo, FiVideoOff } from 'react-icons/fi';
 import { MdCallEnd } from 'react-icons/md';
 

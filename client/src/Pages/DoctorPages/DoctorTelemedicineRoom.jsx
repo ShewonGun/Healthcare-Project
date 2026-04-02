@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 import { telemedicineAPI, appointmentAPI } from '../../utils/api';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../Context/AuthContext';
 import { FiChevronLeft, FiUser, FiMic, FiMicOff, FiVideo, FiVideoOff } from 'react-icons/fi';
 import { MdCallEnd } from 'react-icons/md';
 
@@ -254,6 +254,14 @@ const DoctorTelemedicineRoom = () => {
       await leaveChannel();
       const { data: endRes } = await telemedicineAPI.endSession(session._id, {});
       setSession(endRes.data);
+
+      // Keep appointment UI in sync with telemedicine completion.
+      try {
+        await appointmentAPI.updateStatus(appointmentId, { status: 'completed' });
+        setAppointment((prev) => (prev ? { ...prev, status: 'completed' } : prev));
+      } catch (statusErr) {
+        console.warn('[Telemedicine] Session ended but failed to mark appointment completed:', statusErr?.response?.data?.message || statusErr.message);
+      }
     } catch (err) {
       setActionErr(err.response?.data?.message || err.message || 'Failed to end session.');
     } finally {

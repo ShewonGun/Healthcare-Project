@@ -18,6 +18,7 @@ const appointmentSchema = new mongoose.Schema(
     consultationFee: { type: Number, default: 0 },
     paymentStatus: { type: String, enum: ['pending', 'paid', 'refunded'], default: 'pending' },
     paymentMethod: { type: String, enum: ['card', 'cash', null], default: 'cash' },
+    cashPaymentRequested: { type: Boolean, default: false },
     attachedReports: [
       {
         reportId:   { type: String },

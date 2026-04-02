@@ -56,6 +56,10 @@ const DoctorAppointments = () => {
 
   // Pagination
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const safeTotalPages = Math.max(1, totalPages);
+  const groupStart = Math.floor((currentPage - 1) / 5) * 5 + 1;
+  const groupEnd = Math.min(groupStart + 4, safeTotalPages);
+  const visiblePages = Array.from({ length: groupEnd - groupStart + 1 }, (_, i) => groupStart + i);
   const paginated  = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   // Reset page when tab or search changes
@@ -153,7 +157,7 @@ const DoctorAppointments = () => {
           >
             ← Prev
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          {visiblePages.map((page) => (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
@@ -167,8 +171,8 @@ const DoctorAppointments = () => {
             </button>
           ))}
           <button
-            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, safeTotalPages))}
+            disabled={currentPage === safeTotalPages}
             className="px-3 py-1.5 rounded-md text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             Next →

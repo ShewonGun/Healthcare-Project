@@ -36,17 +36,27 @@ const HowItWorks = () => (
       </div>
 
       {/* Steps grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {STEPS.map(({ step, title, desc }) => (
-          <div key={step} className="flex flex-col gap-3">
+      <div className="relative">
+        <div
+          aria-hidden="true"
+          className="hidden lg:block absolute left-0 right-0 top-4.5 h-px bg-linear-to-r from-indigo-200 via-indigo-300 to-indigo-200 dark:from-indigo-900 dark:via-indigo-800 dark:to-indigo-900"
+        />
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {STEPS.map(({ step, title, desc }) => (
+            <div
+              key={step}
+              className="relative flex flex-col gap-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700"
+            >
             {/* Step badge */}
             <div className="w-9 h-9 rounded-md bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-sm font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
               {step}
             </div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{desc}</p>
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   </section>
