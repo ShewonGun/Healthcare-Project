@@ -13,9 +13,10 @@ const notifyAsync = (endpoint, payload) => {
     .post(`${NOTIFICATION_URL()}/${endpoint}`, payload, {
       headers: { 'x-service-secret': process.env.SERVICE_SECRET },
     })
-    .catch((err) =>
-      console.error(`[Notification] Failed to call ${endpoint}:`, err.message)
-    );
+    .catch((err) => {
+      const detail = err.response?.data || err.message;
+      console.error(`[Notification] Failed to call ${endpoint}:`, detail);
+    });
 };
 
 // Fetch patient info; returns { id, name, email, phone } with safe fallbacks

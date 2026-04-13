@@ -1,9 +1,15 @@
 import Notification from '../models/Notification.js';
 import { sendEmail, appointmentBookedEmail, appointmentConfirmedEmail, appointmentCancelledEmail, appointmentCompletedEmail, consultationCompletedEmail } from '../utils/emailService.js';
-import { sendSMS, appointmentBookedSMS, appointmentConfirmedSMS, appointmentCancelledSMS, appointmentCompletedSMS, consultationCompletedSMS } from '../utils/smsService.js';
+import {
+  sendWhatsApp,
+  appointmentBookedWhatsApp,
+  appointmentConfirmedWhatsApp,
+  appointmentCancelledWhatsApp,
+  appointmentCompletedWhatsApp,
+} from '../utils/smsService.js';
 
 // Internal helper 
- //Dispatch email + SMS for a recipient and persist to DB.
+ //Dispatch email + WhatsApp for a recipient and persist to DB.
 const dispatchNotification = async ({
   recipientId,
   recipientRole,
@@ -14,11 +20,14 @@ const dispatchNotification = async ({
   phone,
   emailHtml,
   smsText,
+  whatsappTemplate,
   referenceId,
   referenceType,
 }) => {
   let emailSent = false, emailError = null;
   let smsSent   = false, smsError   = null;
+  const fallbackPhone = process.env.WHATSAPP_TEST_RECIPIENT || null;
+  const targetPhone = phone || fallbackPhone;
 
   // Send email
   if (email && emailHtml) {
@@ -27,11 +36,16 @@ const dispatchNotification = async ({
     emailError = result.error || null;
   }
 
-  // Send SMS
-  if (phone && smsText) {
-    const result = await sendSMS(phone, smsText);
+  // Send WhatsApp message (stored in legacy sms* fields for backward compatibility)
+  if (targetPhone && smsText) {
+    if (!phone && fallbackPhone) {
+      console.warn(`[Notification] Using WHATSAPP_TEST_RECIPIENT fallback for recipientId=${recipientId}`);
+    }
+    const result = await sendWhatsApp(targetPhone, smsText, whatsappTemplate);
     smsSent  = result.success;
     smsError = result.error || null;
+  } else if (smsText && !targetPhone) {
+    smsError = 'Recipient phone is missing';
   }
 
   // Persist notification record
@@ -46,7 +60,7 @@ const dispatchNotification = async ({
     smsSent,
     smsError,
     sentToEmail:   email  || null,
-    sentToPhone:   phone  || null,
+    sentToPhone:   smsText ? (targetPhone || null) : null,
     referenceId:   referenceId   || null,
     referenceType: referenceType || null,
   });
@@ -81,7 +95,11 @@ export const notifyAppointmentBooked = async (req, res) => {
       email:         patient.email,
       phone:         patient.phone,
       emailHtml:     appointmentBookedEmail({ recipientName: patient.name, ...templateData }),
-      smsText:       appointmentBookedSMS({ recipientName: patient.name, ...templateData }),
+      smsText:       appointmentBookedWhatsApp({ recipientName: patient.name, ...templateData }),
+      whatsappTemplate: {
+        templateName: process.env.WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED || 'appointment_booked_new',
+        templateParams: [patient.name, doctor.name, date, time],
+      },
       referenceId:   appointment._id,
       referenceType: 'appointment',
     });
@@ -125,7 +143,11 @@ export const notifyAppointmentConfirmed = async (req, res) => {
       email:         patient.email,
       phone:         patient.phone,
       emailHtml:     appointmentConfirmedEmail({ recipientName: patient.name, ...templateData }),
-      smsText:       appointmentConfirmedSMS({ recipientName: patient.name, ...templateData }),
+      smsText:       appointmentConfirmedWhatsApp({ recipientName: patient.name, ...templateData }),
+      whatsappTemplate: {
+        templateName: process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CONFIRMED || 'appointment_confirmed_new',
+        templateParams: [patient.name, doctor.name, date, time],
+      },
       referenceId:   appointment._id,
       referenceType: 'appointment',
     });
@@ -162,7 +184,11 @@ export const notifyAppointmentCancelled = async (req, res) => {
       email:         patient.email,
       phone:         patient.phone,
       emailHtml:     appointmentCancelledEmail({ recipientName: patient.name, ...templateData }),
-      smsText:       appointmentCancelledSMS({ recipientName: patient.name, ...templateData }),
+      smsText:       appointmentCancelledWhatsApp({ recipientName: patient.name, ...templateData }),
+      whatsappTemplate: {
+        templateName: process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED || 'appointment_cancelled',
+        templateParams: [patient.name, doctor.name, date, time, cancellationReason || 'Not specified'],
+      },
       referenceId:   appointment._id,
       referenceType: 'appointment',
     });
@@ -176,7 +202,11 @@ export const notifyAppointmentCancelled = async (req, res) => {
       email:         doctor.email,
       phone:         doctor.phone,
       emailHtml:     appointmentCancelledEmail({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
-      smsText:       appointmentCancelledSMS({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
+      smsText:       appointmentCancelledWhatsApp({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
+      whatsappTemplate: {
+        templateName: process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED || 'appointment_cancelled',
+        templateParams: [`Dr. ${doctor.name}`, doctor.name, date, time, cancellationReason || 'Not specified'],
+      },
       referenceId:   appointment._id,
       referenceType: 'appointment',
     });
@@ -204,7 +234,11 @@ export const notifyAppointmentCompleted = async (req, res) => {
       email:         patient.email,
       phone:         patient.phone,
       emailHtml:     appointmentCompletedEmail({ recipientName: patient.name, ...templateData }),
-      smsText:       appointmentCompletedSMS({ recipientName: patient.name, ...templateData }),
+      smsText:       appointmentCompletedWhatsApp({ recipientName: patient.name, ...templateData }),
+      whatsappTemplate: {
+        templateName: process.env.WHATSAPP_TEMPLATE_APPOINTMENT_COMPLETED || 'appointment_completed',
+        templateParams: [patient.name, doctor.name],
+      },
       referenceId:   appointment._id,
       referenceType: 'appointment',
     });
@@ -218,7 +252,11 @@ export const notifyAppointmentCompleted = async (req, res) => {
       email:         doctor.email,
       phone:         doctor.phone,
       emailHtml:     appointmentCompletedEmail({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
-      smsText:       appointmentCompletedSMS({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
+      smsText:       appointmentCompletedWhatsApp({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
+      whatsappTemplate: {
+        templateName: process.env.WHATSAPP_TEMPLATE_APPOINTMENT_COMPLETED || 'appointment_completed',
+        templateParams: [`Dr. ${doctor.name}`, doctor.name],
+      },
       referenceId:   appointment._id,
       referenceType: 'appointment',
     });
@@ -246,7 +284,6 @@ export const notifyConsultationCompleted = async (req, res) => {
       email:         patient.email,
       phone:         patient.phone,
       emailHtml:     consultationCompletedEmail({ recipientName: patient.name, ...templateData }),
-      smsText:       consultationCompletedSMS({ recipientName: patient.name, ...templateData }),
       referenceId:   session._id,
       referenceType: 'session',
     });
@@ -260,7 +297,6 @@ export const notifyConsultationCompleted = async (req, res) => {
       email:         doctor.email,
       phone:         doctor.phone,
       emailHtml:     consultationCompletedEmail({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
-      smsText:       consultationCompletedSMS({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
       referenceId:   session._id,
       referenceType: 'session',
     });
