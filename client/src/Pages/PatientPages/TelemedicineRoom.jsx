@@ -99,13 +99,33 @@ const TelemedicineRoom = () => {
         const appt = apptRes.data;
         setAppointment(appt);
 
-        const { data: createRes } = await telemedicineAPI.createSession({
-          appointmentId,
-          patientId:   appt.patientId,
-          doctorId:    appt.doctorId,
-          scheduledAt: appt.appointmentDate,
-        });
-        const sess = createRes.data;
+        let sess;
+        try {
+          const { data: sessRes } = await telemedicineAPI.getByAppointment(appointmentId);
+          sess = sessRes.data;
+        } catch (e) {
+          if (e.response?.status === 404) {
+            try {
+              const { data: createRes } = await telemedicineAPI.createSession({
+                appointmentId,
+                patientId:   appt.patientId,
+                doctorId:    appt.doctorId,
+                scheduledAt: appt.appointmentDate,
+              });
+              sess = createRes.data;
+            } catch (createErr) {
+              if (createErr.response?.status === 409) {
+                // Session already exists (created by doctor side) — use it
+                sess = createErr.response.data?.data;
+                if (!sess) {
+                  // Fallback: fetch it directly
+                  const { data: fallbackRes } = await telemedicineAPI.getByAppointment(appointmentId);
+                  sess = fallbackRes.data;
+                }
+              } else throw createErr;
+            }
+          } else throw e;
+        }
         setSession(sess);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load session.');
