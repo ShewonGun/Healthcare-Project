@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../Context/ThemeContext';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import { FaHeartbeat } from 'react-icons/fa';
 

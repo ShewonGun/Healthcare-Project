@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../Context/ThemeContext';
 import AdminSidebar from './AdminSidebar';
 import { FiMenu, FiSun, FiMoon, FiChevronDown, FiLogOut, FiUser } from 'react-icons/fi';
 import { FaHeartbeat } from 'react-icons/fa';

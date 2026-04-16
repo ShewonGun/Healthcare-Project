@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../Context/AuthContext';
+import { useTheme } from '../../Context/ThemeContext';
 import { FiCalendar, FiUser, FiCheck, FiSun, FiMoon, FiChevronDown, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import { MdDashboard } from 'react-icons/md';
 import { FaHeartbeat } from 'react-icons/fa';
