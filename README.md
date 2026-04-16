@@ -134,7 +134,3 @@ kubectl -n healthcare logs deploy/api-gateway --tail=100
 
 - If you update Kubernetes images, make sure tags in deployment scripts match pushed image tags.
 - For frontend production on Vercel, verify `client/vercel.json` rewrites and environment variables before deployment.
-
-## License
-
-This project is currently unlicensed. Add a `LICENSE` file if you plan to publish or distribute it publicly.
