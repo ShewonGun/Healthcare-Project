@@ -5,11 +5,19 @@ const configuredApiBase = (import.meta.env.VITE_API_BASE_URL || "").trim();
 
 // In dev we use /api via Vite proxy. In production, set VITE_API_BASE_URL.
 // If a host is provided without /api, append it automatically.
-const apiBaseURL = configuredApiBase
+const normalizedApiBaseURL = configuredApiBase
   ? (/\/api\/?$/i.test(configuredApiBase)
       ? configuredApiBase.replace(/\/+$/, "")
       : `${configuredApiBase.replace(/\/+$/, "")}/api`)
   : "/api";
+
+// Safety guard for deployments: never call insecure HTTP APIs from an HTTPS page.
+const isHttpsPage =
+  typeof window !== "undefined" && window.location?.protocol === "https:";
+const apiBaseURL =
+  isHttpsPage && /^http:\/\//i.test(normalizedApiBaseURL)
+    ? "/api"
+    : normalizedApiBaseURL;
 
 const api = axios.create({
   baseURL: apiBaseURL,
