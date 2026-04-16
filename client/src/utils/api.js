@@ -1,9 +1,18 @@
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
-// Base URL is empty so Vite proxy forwards /api → http://localhost:3000
+const configuredApiBase = (import.meta.env.VITE_API_BASE_URL || "").trim();
+
+// In dev we use /api via Vite proxy. In production, set VITE_API_BASE_URL.
+// If a host is provided without /api, append it automatically.
+const apiBaseURL = configuredApiBase
+  ? (/\/api\/?$/i.test(configuredApiBase)
+      ? configuredApiBase.replace(/\/+$/, "")
+      : `${configuredApiBase.replace(/\/+$/, "")}/api`)
+  : "/api";
+
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: apiBaseURL,
   headers: { "Content-Type": "application/json" },
 });
 
