@@ -6,6 +6,7 @@ import {
   appointmentConfirmedSMS,
   appointmentCancelledSMS,
   appointmentCompletedSMS,
+  consultationCompletedSMS,
 } from '../utils/smsService.js';
 
 // Internal helper 
@@ -107,7 +108,9 @@ export const notifyAppointmentBooked = async (req, res) => {
       title:         'New Appointment Booked',
       message:       `Patient ${patient.name} has booked an appointment on ${date} at ${time}.`,
       email:         doctor.email,
+      phone:         doctor.phone,
       emailHtml:     appointmentBookedEmail({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
+      smsText:       appointmentBookedSMS({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
       referenceId:   appointment._id,
       referenceType: 'appointment',
     });
@@ -143,7 +146,21 @@ export const notifyAppointmentConfirmed = async (req, res) => {
       referenceType: 'appointment',
     });
 
-    res.status(201).json({ success: true, data: { patientNotif } });
+    const doctorNotif = await dispatchNotification({
+      recipientId:   doctor.id,
+      recipientRole: 'doctor',
+      type:          'appointment_confirmed',
+      title:         'Appointment Confirmed',
+      message:       `Appointment with patient ${patient.name} on ${date} at ${time} has been confirmed.`,
+      email:         doctor.email,
+      phone:         doctor.phone,
+      emailHtml:     appointmentConfirmedEmail({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
+      smsText:       appointmentConfirmedSMS({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
+      referenceId:   appointment._id,
+      referenceType: 'appointment',
+    });
+
+    res.status(201).json({ success: true, data: { patientNotif, doctorNotif } });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -272,6 +289,7 @@ export const notifyConsultationCompleted = async (req, res) => {
       email:         doctor.email,
       phone:         doctor.phone,
       emailHtml:     consultationCompletedEmail({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
+      smsText:       consultationCompletedSMS({ recipientName: `Dr. ${doctor.name}`, ...templateData }),
       referenceId:   session._id,
       referenceType: 'session',
     });

@@ -395,6 +395,26 @@ export const updatePaymentStatus = async (req, res) => {
   }
 };
 
+// Internal (payment-service): Get appointment status snapshot
+export const getAppointmentStatusInternal = async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id).select('status paymentStatus');
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        status: appointment.status,
+        paymentStatus: appointment.paymentStatus,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Patient: mark own appointment as cash payment (pay at hospital/clinic)
 export const markPaymentCash = async (req, res) => {
   try {

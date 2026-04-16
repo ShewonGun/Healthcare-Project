@@ -60,6 +60,63 @@ export const getReportById = async (req, res) => {
   }
 };
 
+// Update report metadata
+export const updateReport = async (req, res) => {
+  try {
+    const report = await Report.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    if (report.patient.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const { title, description, reportType } = req.body;
+    const VALID_REPORT_TYPES = ['lab_report', 'prescription', 'scan', 'discharge_summary', 'other'];
+
+    if (typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({ success: false, message: 'Report title is required' });
+    }
+
+    report.title = title.trim();
+    report.description = typeof description === 'string' && description.trim()
+      ? description.trim()
+      : null;
+
+    if (typeof reportType === 'string' && reportType.trim()) {
+      const normalizedType = reportType.trim();
+      if (!VALID_REPORT_TYPES.includes(normalizedType)) {
+        return res.status(400).json({ success: false, message: 'Invalid report type' });
+      }
+      report.reportType = normalizedType;
+    }
+
+    // If a new file is uploaded, replace cloud metadata and best-effort cleanup old file.
+    if (req.file) {
+      const oldPublicId = report.publicId;
+      report.fileUrl = req.file.path;
+      report.publicId = req.file.filename;
+      report.fileFormat = req.file.originalname?.split('.').pop() || report.fileFormat || null;
+
+      if (oldPublicId && oldPublicId !== report.publicId) {
+        try {
+          await cloudinary.uploader.destroy(oldPublicId);
+        } catch {
+          // Non-blocking cleanup failure for old file.
+        }
+      }
+    }
+
+    await report.save();
+
+    res.json({ success: true, message: 'Report updated successfully', data: report });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Delete a report 
 export const deleteReport = async (req, res) => {
   try {

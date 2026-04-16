@@ -10,6 +10,7 @@ import {
   addNotes,
   getAllAppointments,
   updatePaymentStatus,
+  getAppointmentStatusInternal,
   markPaymentCash,
   markPaymentPaid,
   uploadPrescription,
@@ -44,6 +45,7 @@ router.put('/:id/mark-paid', protect, requireRole('patient'), markPaymentPaid);
 router.put('/:id/mark-cash', protect, requireRole('patient'), markPaymentCash);
 
 // Internal — called by payment-service only
+router.get('/internal/:id/status', serviceAuth, getAppointmentStatusInternal);
 router.put('/:id/payment-status', serviceAuth, updatePaymentStatus);
 
 export default router;

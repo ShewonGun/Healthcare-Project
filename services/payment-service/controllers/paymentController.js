@@ -275,6 +275,27 @@ export const adminMarkCashPaid = async (req, res) => {
     const safeAmountLkr = Number(amountLkr) || 0;
     const amountLkrCents = Math.max(0, Math.round(safeAmountLkr * 100));
 
+    const APPT_URL = process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:3004';
+
+    // Guard: cancelled appointments cannot be marked as paid.
+    let apptStatusRes;
+    try {
+      apptStatusRes = await axios.get(
+        `${APPT_URL}/api/appointments/internal/${appointmentId}/status`,
+        { headers: { 'x-service-secret': process.env.SERVICE_SECRET } }
+      );
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 404) {
+        return res.status(404).json({ success: false, message: 'Appointment not found' });
+      }
+      return res.status(502).json({ success: false, message: 'Unable to verify appointment status' });
+    }
+    const appointmentStatus = apptStatusRes.data?.data?.status;
+    if (appointmentStatus === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Cannot mark a cancelled appointment as paid' });
+    }
+
     // Idempotent — don't double-complete
     const existing = await Payment.findOne({ appointmentId });
     if (existing?.status === 'completed') {
@@ -307,7 +328,6 @@ export const adminMarkCashPaid = async (req, res) => {
     }
 
     // Notify appointment service via internal route
-    const APPT_URL = process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:3004';
     await axios
       .put(
         `${APPT_URL}/api/appointments/${appointmentId}/payment-status`,
@@ -317,6 +337,47 @@ export const adminMarkCashPaid = async (req, res) => {
       .catch((err) => console.error('[Payment] Failed to update appointment:', err.message));
 
     res.status(200).json({ success: true, message: 'Cash payment marked as paid', data: payment });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── PUT /api/payments/admin/:appointmentId/mark-refunded ───────────────────
+/**
+ * Admin marks a paid appointment payment as refunded.
+ * Intended for cancelled appointments where money should be returned.
+ */
+export const adminMarkRefunded = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+
+    const payment = await Payment.findOne({ appointmentId }).sort({ createdAt: -1 });
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Payment record not found for this appointment' });
+    }
+
+    if (payment.status === 'refunded') {
+      return res.status(409).json({ success: false, message: 'Payment is already marked as refunded' });
+    }
+
+    if (payment.status !== 'completed') {
+      return res.status(400).json({ success: false, message: 'Only completed payments can be refunded' });
+    }
+
+    payment.status = 'refunded';
+    await payment.save();
+
+    // Sync appointment paymentStatus with appointment-service
+    const APPT_URL = process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:3004';
+    await axios
+      .put(
+        `${APPT_URL}/api/appointments/${appointmentId}/payment-status`,
+        { paymentStatus: 'refunded', paymentMethod: payment.stripePaymentMethod || undefined },
+        { headers: { 'x-service-secret': process.env.SERVICE_SECRET } }
+      )
+      .catch((err) => console.error('[Payment] Failed to update appointment:', err.message));
+
+    res.status(200).json({ success: true, message: 'Payment marked as refunded', data: payment });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
