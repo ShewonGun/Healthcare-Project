@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { doctorAPI } from "../../utils/api";
-import { FiChevronDown, FiAlertCircle, FiCheck, FiEdit2 } from "react-icons/fi";
+import { useAuth } from "../../Context/AuthContext";
+import { toast } from "react-hot-toast";
+import { FiChevronDown, FiEdit2 } from "react-icons/fi";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const SECTIONS = ["Personal", "Professional", "Address", "Security"];
@@ -103,28 +105,9 @@ const SaveButton = ({ loading, label = "Save Changes" }) => (
   </button>
 );
 
-const Toast = ({ msg, type }) => {
-  if (!msg) return null;
-  const colors =
-    type === "error"
-      ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400"
-      : "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400";
-  return (
-    <div
-      className={`flex items-center gap-2 text-sm border rounded-md px-4 py-3 mb-5 ${colors}`}
-    >
-      {type === "error" ? (
-        <FiAlertCircle className="w-4 h-4 shrink-0" />
-      ) : (
-        <FiCheck className="w-4 h-4 shrink-0" />
-      )}
-      {msg}
-    </div>
-  );
-};
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const DoctorProfile = () => {
+  const { user } = useAuth();
   const imageInputRef = useRef(null);
   const [active, setActive] = useState("Personal");
   const [profile, setProfile] = useState(null);
@@ -132,7 +115,6 @@ const DoctorProfile = () => {
 
   // Per-section save state
   const [saving, setSaving] = useState({});
-  const [toast, setToast] = useState({ section: null, msg: "", type: "" });
 
   const [imgUploading, setImgUploading] = useState(false);
 
@@ -166,6 +148,11 @@ const DoctorProfile = () => {
     newPassword: "",
     confirmPassword: "",
   });
+
+  const isGoogleAuth = user?.authProvider === "google";
+  const visibleSections = isGoogleAuth
+    ? SECTIONS.filter((s) => s !== "Security")
+    : SECTIONS;
 
   // ── Load ───────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -203,11 +190,6 @@ const DoctorProfile = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const showToast = (section, msg, type = "success") => {
-    setToast({ section, msg, type });
-    setTimeout(() => setToast({ section: null, msg: "", type: "" }), 4000);
-  };
-
   const setSav = (key, val) => setSaving((s) => ({ ...s, [key]: val }));
 
   // ── Save handlers ──────────────────────────────────────────────────────────
@@ -217,13 +199,7 @@ const DoctorProfile = () => {
     try {
       const { data } = await doctorAPI.updateProfile(personal);
       setProfile(data.data);
-      showToast("personal", "Personal info updated.");
-    } catch (err) {
-      showToast(
-        "personal",
-        err.response?.data?.message || "Failed to save.",
-        "error",
-      );
+    } catch {
     } finally {
       setSav("personal", false);
     }
@@ -244,13 +220,7 @@ const DoctorProfile = () => {
       };
       const { data } = await doctorAPI.updateProfile(payload);
       setProfile(data.data);
-      showToast("professional", "Professional info updated.");
-    } catch (err) {
-      showToast(
-        "professional",
-        err.response?.data?.message || "Failed to save.",
-        "error",
-      );
+    } catch {
     } finally {
       setSav("professional", false);
     }
@@ -261,13 +231,7 @@ const DoctorProfile = () => {
     setSav("address", true);
     try {
       await doctorAPI.updateProfile({ address });
-      showToast("address", "Address updated.");
-    } catch (err) {
-      showToast(
-        "address",
-        err.response?.data?.message || "Failed to save.",
-        "error",
-      );
+    } catch {
     } finally {
       setSav("address", false);
     }
@@ -276,15 +240,11 @@ const DoctorProfile = () => {
   const savePassword = async (e) => {
     e.preventDefault();
     if (passwords.newPassword !== passwords.confirmPassword) {
-      showToast("security", "New passwords do not match.", "error");
+      toast.error("New passwords do not match.");
       return;
     }
     if (passwords.newPassword.length < 8) {
-      showToast(
-        "security",
-        "New password must be at least 8 characters.",
-        "error",
-      );
+      toast.error("New password must be at least 8 characters.");
       return;
     }
     setSav("security", true);
@@ -298,13 +258,7 @@ const DoctorProfile = () => {
         newPassword: "",
         confirmPassword: "",
       });
-      showToast("security", "Password changed successfully.");
-    } catch (err) {
-      showToast(
-        "security",
-        err.response?.data?.message || "Failed to change password.",
-        "error",
-      );
+    } catch {
     } finally {
       setSav("security", false);
     }
@@ -314,11 +268,11 @@ const DoctorProfile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      showToast("personal", "Please select an image file.", "error");
+      toast.error("Please select an image file.");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      showToast("personal", "Image must be under 5 MB.", "error");
+      toast.error("Image must be under 5 MB.");
       return;
     }
     setImgUploading(true);
@@ -330,12 +284,7 @@ const DoctorProfile = () => {
         ...p,
         profileImage: data.data?.profileImage || data.data,
       }));
-    } catch (err) {
-      showToast(
-        "personal",
-        err.response?.data?.message || "Image upload failed.",
-        "error",
-      );
+    } catch {
     } finally {
       setImgUploading(false);
       e.target.value = "";
@@ -445,7 +394,7 @@ const DoctorProfile = () => {
       <div className="flex flex-col md:flex-row gap-4 md:gap-8">
         {/* ── Sidebar nav (desktop) ────────────────────────────────────────── */}
         <nav className="hidden md:flex flex-col gap-1 shrink-0 w-44">
-          {SECTIONS.map((s) => (
+          {visibleSections.map((s) => (
             <button
               key={s}
               onClick={() => setActive(s)}
@@ -463,7 +412,7 @@ const DoctorProfile = () => {
         {/* ── Mobile tab row ────────────────────────────────────────────────── */}
         <div className="md:hidden w-full">
           <div className="flex gap-1 overflow-x-auto pb-1">
-            {SECTIONS.map((s) => (
+            {visibleSections.map((s) => (
               <button
                 key={s}
                 onClick={() => setActive(s)}
@@ -484,10 +433,6 @@ const DoctorProfile = () => {
           {/* ── Personal ── */}
           {active === "Personal" && (
             <form onSubmit={savePersonal}>
-              <Toast
-                msg={toast.section === "personal" ? toast.msg : ""}
-                type={toast.type}
-              />
               <SectionHeading
                 title="Personal Information"
                 desc="Update your name and contact details."
@@ -570,10 +515,6 @@ const DoctorProfile = () => {
           {/* ── Professional ── */}
           {active === "Professional" && (
             <form onSubmit={saveProfessional}>
-              <Toast
-                msg={toast.section === "professional" ? toast.msg : ""}
-                type={toast.type}
-              />
               <SectionHeading
                 title="Professional Information"
                 desc="Your qualifications, specializations, and practice details."
@@ -732,10 +673,6 @@ const DoctorProfile = () => {
           {/* ── Address ── */}
           {active === "Address" && (
             <form onSubmit={saveAddress}>
-              <Toast
-                msg={toast.section === "address" ? toast.msg : ""}
-                type={toast.type}
-              />
               <SectionHeading
                 title="Clinic / Practice Address"
                 desc="Your clinic or practice location."
@@ -801,12 +738,8 @@ const DoctorProfile = () => {
           )}
 
           {/* ── Security ── */}
-          {active === "Security" && (
+          {!isGoogleAuth && active === "Security" && (
             <form onSubmit={savePassword}>
-              <Toast
-                msg={toast.section === "security" ? toast.msg : ""}
-                type={toast.type}
-              />
               <SectionHeading
                 title="Change Password"
                 desc="Use a strong password of at least 8 characters."

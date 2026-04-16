@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
 import { FiUpload } from 'react-icons/fi';
+import useLockBodyScroll from '../../utils/useLockBodyScroll';
 
 const PrescriptionModal = ({ onClose, onSave, loading }) => {
+	useLockBodyScroll();
 	const fileRef  = useRef(null);
 	const [file, setFile] = useState(null);
 	const [notes, setNotes] = useState('');

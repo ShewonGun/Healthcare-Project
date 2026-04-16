@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminAPI } from '../../utils/api';
-import { FiCheck, FiSearch, FiX } from 'react-icons/fi';
+import { FiCheck, FiRotateCcw, FiSearch, FiX } from 'react-icons/fi';
 import Pagination from '../../Componets/SharedComponents/Pagination';
 
 const PAGE_SIZE = 5;
@@ -63,6 +63,21 @@ export default function ManageAppointments() {
       showToast('Payment marked as paid.');
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to mark as paid.');
+    } finally {
+      setMarkingId(null);
+    }
+  };
+
+  const handleMarkRefunded = async (appt) => {
+    setMarkingId(appt._id);
+    try {
+      await adminAPI.markRefunded(appt._id);
+      setAppointments((prev) =>
+        prev.map((a) => a._id === appt._id ? { ...a, paymentStatus: 'refunded' } : a)
+      );
+      showToast('Payment marked as refunded.');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to mark as refunded.');
     } finally {
       setMarkingId(null);
     }
@@ -268,7 +283,7 @@ export default function ManageAppointments() {
                     <td className="md:table-cell flex justify-between items-center px-4 md:px-5 py-3 md:py-3.5">
                       <span className="md:hidden text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</span>
                       <div className="flex flex-col gap-1 items-end md:items-start text-right md:text-left">
-                      {a.paymentStatus === 'pending' ? (
+                      {a.paymentStatus === 'pending' && a.status !== 'cancelled' ? (
                         <button
                           onClick={() => handleMarkCashPaid(a)}
                           disabled={markingId === a._id}
@@ -280,6 +295,19 @@ export default function ManageAppointments() {
                             <FiCheck className="w-3 h-3" />
                           )}
                           Mark Paid
+                        </button>
+                      ) : a.status === 'cancelled' && a.paymentStatus === 'paid' ? (
+                        <button
+                          onClick={() => handleMarkRefunded(a)}
+                          disabled={markingId === a._id}
+                          className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded transition w-max"
+                        >
+                          {markingId === a._id ? (
+                            <div className="w-3 h-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          ) : (
+                            <FiRotateCcw className="w-3 h-3" />
+                          )}
+                          Mark Refunded
                         </button>
                       ) : (
                         <span className="text-xs text-gray-400 dark:text-gray-600">—</span>

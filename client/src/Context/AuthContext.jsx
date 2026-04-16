@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
       role:      data.role,
       token:     data.token,
       profileImage: data.profileImage || null,
+      authProvider: data.authProvider || 'local',
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     setUser(payload);

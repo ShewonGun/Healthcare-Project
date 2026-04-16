@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import useLockBodyScroll from '../../utils/useLockBodyScroll';
 
 const AddAdminModal = ({ onClose, onSave, loading, error }) => {
+	useLockBodyScroll();
 	const [form, setForm] = useState({ name: '', email: '', password: '' });
 
 	const handleChange = (e) => {

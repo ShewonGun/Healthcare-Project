@@ -1,4 +1,4 @@
-import { FiFileText, FiFile, FiClipboard, FiImage, FiBarChart2, FiExternalLink } from 'react-icons/fi';
+import { FiFileText, FiFile, FiClipboard, FiImage, FiBarChart2, FiExternalLink, FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 export const REPORT_TYPES = [
@@ -31,7 +31,7 @@ export const formatDate = (iso) =>
 export const isImage = (fmt) => ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes((fmt || '').toLowerCase());
 
 // ── Report card ───────────────────────────────────────────────────────────────
-const ReportCard = ({ report, onDelete }) => {
+const ReportCard = ({ report, onEdit, onDelete }) => {
   const typeMeta  = REPORT_TYPES.find((t) => t.value === report.reportType) || REPORT_TYPES[4];
   const colorCls  = TYPE_COLORS[report.reportType] || TYPE_COLORS.other;
   const TypeIcon  = TYPE_ICONS[report.reportType] || TYPE_ICONS.other;
@@ -72,16 +72,27 @@ const ReportCard = ({ report, onDelete }) => {
               href={report.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="p-1 rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition"
+              title="View report"
+              aria-label="View report"
             >
               <FiExternalLink className="w-3.5 h-3.5" />
-              View
             </a>
             <button
-              onClick={() => onDelete(report)}
-              className="text-xs font-medium text-red-500 dark:text-red-400 hover:underline"
+              onClick={() => onEdit(report)}
+              className="p-1 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              title="Edit report"
+              aria-label="Edit report"
             >
-              Delete
+              <FiEdit2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => onDelete(report)}
+              className="p-1 rounded text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+              title="Delete report"
+              aria-label="Delete report"
+            >
+              <FiTrash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

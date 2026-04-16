@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import useLockBodyScroll from '../../utils/useLockBodyScroll';
 
 const CancelAppointmentModal = ({ onClose, onConfirm, loading }) => {
+	useLockBodyScroll();
 	const [reason, setReason] = useState('');
 
 	return (

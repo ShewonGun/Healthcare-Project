@@ -3,35 +3,8 @@ import { reportAPI } from '../../utils/api';
 import { FiPlus, FiFileText } from 'react-icons/fi';
 import ReportCard, { REPORT_TYPES } from '../../Componets/PatientComponents/ReportCard';
 import AddLabReportModal from '../../Componets/PatientComponents/AddLabReportModal';
-
-// ── Delete confirmation modal ──────────────────────────────────────────────────
-const DeleteModal = ({ report, onConfirm, onClose, deleting }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-    <div className="relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6">
-      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Delete report?</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        "<span className="font-medium text-gray-700 dark:text-gray-300">{report.title}</span>" will be permanently deleted and cannot be recovered.
-      </p>
-      <div className="flex gap-3">
-        <button
-          onClick={onConfirm}
-          disabled={deleting}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold rounded-md transition"
-        >
-          {deleting ? <div className="animate-spin rounded-full w-4 h-4 border-2 border-white border-t-transparent" /> : null}
-          Delete
-        </button>
-        <button
-          onClick={onClose}
-          className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-);
+import EditReportModal from '../../Componets/PatientComponents/EditReportModal';
+import DeleteConfirmModal from '../../Componets/SharedComponents/DeleteConfirmModal';
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 const MyReports = () => {
@@ -39,6 +12,8 @@ const MyReports = () => {
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState('');
   const [showUpload, setShowUpload]   = useState(false);
+  const [editTarget, setEditTarget]   = useState(null);
+  const [editing, setEditing]         = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting]       = useState(false);
   const [filter, setFilter]           = useState('all');
@@ -66,6 +41,19 @@ const MyReports = () => {
       // keep modal open so user can retry
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleEditConfirm = async (payload) => {
+    if (!editTarget) return;
+    setEditing(true);
+    try {
+      const { data } = await reportAPI.update(editTarget._id, payload);
+      const updated = data.data;
+      setReports((prev) => prev.map((r) => (r._id === updated._id ? updated : r)));
+      setEditTarget(null);
+    } finally {
+      setEditing(false);
     }
   };
 
@@ -153,19 +141,30 @@ const MyReports = () => {
       ) : (
         <div className="space-y-3">
           {filtered.map((r) => (
-            <ReportCard key={r._id} report={r} onDelete={setDeleteTarget} />
+            <ReportCard key={r._id} report={r} onEdit={setEditTarget} onDelete={setDeleteTarget} />
           ))}
         </div>
       )}
 
       {/* Modals */}
       {showUpload && <AddLabReportModal onClose={() => setShowUpload(false)} onUploaded={handleUploaded} />}
+      {editTarget && (
+        <EditReportModal
+          report={editTarget}
+          editing={editing}
+          onClose={() => setEditTarget(null)}
+          onSave={handleEditConfirm}
+        />
+      )}
       {deleteTarget && (
-        <DeleteModal
-          report={deleteTarget}
+        <DeleteConfirmModal
           onConfirm={handleDeleteConfirm}
           onClose={() => setDeleteTarget(null)}
-          deleting={deleting}
+          loading={deleting}
+          title="Delete report?"
+          message={`"${deleteTarget.title}" will be permanently deleted and cannot be recovered.`}
+          confirmText="Delete"
+          cancelText="Cancel"
         />
       )}
     </div>

@@ -1,4 +1,5 @@
 import { FiX, FiUser } from 'react-icons/fi';
+import useLockBodyScroll from '../../utils/useLockBodyScroll';
 
 // ── Urgency config (exported for reuse) ───────────────────────────────────────
 export const URGENCY = {
@@ -58,6 +59,8 @@ const formatDate = (iso) =>
 //   onClose – close handler
 const SymptomModal = ({ item, onClose }) => {
   if (!item) return null;
+
+  useLockBodyScroll();
 
   const urgency = URGENCY[item.urgencyLevel] || URGENCY.routine;
 

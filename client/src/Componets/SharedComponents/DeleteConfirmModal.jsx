@@ -1,3 +1,5 @@
+import useLockBodyScroll from '../../utils/useLockBodyScroll';
+
 const DeleteConfirmModal = ({
 	onClose,
 	onConfirm,
@@ -7,6 +9,8 @@ const DeleteConfirmModal = ({
 	confirmText = 'Delete',
 	cancelText = 'Cancel',
 }) => {
+	useLockBodyScroll();
+
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
 			<div className="absolute inset-0 bg-black/50 dark:bg-black/70" />

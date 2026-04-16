@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { patientAPI } from '../../utils/api';
 import { useAuth } from '../../Context/AuthContext';
-import { FiChevronDown, FiAlertCircle, FiCheck, FiX, FiEdit2, FiPlus } from 'react-icons/fi';
+import { toast } from 'react-hot-toast';
+import { FiChevronDown, FiX, FiEdit2, FiPlus } from 'react-icons/fi';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const SECTIONS = ['Personal', 'Address', 'Medical', 'Emergency', 'Security'];
@@ -76,23 +77,6 @@ const SaveButton = ({ loading, label = 'Save Changes' }) => (
   </button>
 );
 
-const Toast = ({ msg, type }) => {
-  if (!msg) return null;
-  const colors = type === 'error'
-    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
-    : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400';
-  return (
-    <div className={`flex items-center gap-2 text-sm border rounded-md px-4 py-3 mb-5 ${colors}`}>
-      {type === 'error' ? (
-        <FiAlertCircle className="w-4 h-4 shrink-0" />
-      ) : (
-        <FiCheck className="w-4 h-4 shrink-0" />
-      )}
-      {msg}
-    </div>
-  );
-};
-
 // ── Tag input ─────────────────────────────────────────────────────────────────
 const TagInput = ({ tags, onChange, placeholder }) => {
   const [input, setInput] = useState('');
@@ -151,7 +135,6 @@ const PatientProfile = () => {
 
   // Per-section save state
   const [saving, setSaving] = useState({});
-  const [toast, setToast]   = useState({ section: null, msg: '', type: '' });
 
   const fileRef = useRef(null);
   const [imageUploading, setImageUploading] = useState(false);
@@ -168,6 +151,11 @@ const PatientProfile = () => {
   const [medications, setMedications]           = useState([]);
   const [emergency, setEmergency]               = useState({ name: '', relationship: '', phone: '' });
   const [passwords, setPasswords]               = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+
+  const isGoogleAuth = user?.authProvider === 'google';
+  const visibleSections = isGoogleAuth
+    ? SECTIONS.filter((s) => s !== 'Security')
+    : SECTIONS;
 
   // ── Load profile ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -204,11 +192,6 @@ const PatientProfile = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const showToast = (section, msg, type = 'success') => {
-    setToast({ section, msg, type });
-    setTimeout(() => setToast({ section: null, msg: '', type: '' }), 4000);
-  };
-
   // ── Handlers ────────────────────────────────────────────────────────────────
   const savePersonal = async (e) => {
     e.preventDefault();
@@ -217,9 +200,7 @@ const PatientProfile = () => {
       const { data } = await patientAPI.updateProfile(personal);
       setProfile(data.data);
       if (updateUser) updateUser({ name: `${personal.firstName} ${personal.lastName}` });
-      showToast('personal', 'Personal info updated.');
-    } catch (err) {
-      showToast('personal', err.response?.data?.message || 'Failed to save.', 'error');
+    } catch {
     } finally {
       setSaving((s) => ({ ...s, personal: false }));
     }
@@ -230,9 +211,7 @@ const PatientProfile = () => {
     setSaving((s) => ({ ...s, address: true }));
     try {
       await patientAPI.updateProfile({ address });
-      showToast('address', 'Address updated.');
-    } catch (err) {
-      showToast('address', err.response?.data?.message || 'Failed to save.', 'error');
+    } catch {
     } finally {
       setSaving((s) => ({ ...s, address: false }));
     }
@@ -243,9 +222,7 @@ const PatientProfile = () => {
     setSaving((s) => ({ ...s, medical: true }));
     try {
       await patientAPI.updateProfile({ allergies, chronicDiseases, currentMedications: medications });
-      showToast('medical', 'Medical info updated.');
-    } catch (err) {
-      showToast('medical', err.response?.data?.message || 'Failed to save.', 'error');
+    } catch {
     } finally {
       setSaving((s) => ({ ...s, medical: false }));
     }
@@ -256,9 +233,7 @@ const PatientProfile = () => {
     setSaving((s) => ({ ...s, emergency: true }));
     try {
       await patientAPI.updateProfile({ emergencyContact: emergency });
-      showToast('emergency', 'Emergency contact updated.');
-    } catch (err) {
-      showToast('emergency', err.response?.data?.message || 'Failed to save.', 'error');
+    } catch {
     } finally {
       setSaving((s) => ({ ...s, emergency: false }));
     }
@@ -267,11 +242,11 @@ const PatientProfile = () => {
   const savePassword = async (e) => {
     e.preventDefault();
     if (passwords.newPassword !== passwords.confirmPassword) {
-      showToast('security', 'New passwords do not match.', 'error');
+      toast.error('New passwords do not match.');
       return;
     }
     if (passwords.newPassword.length < 8) {
-      showToast('security', 'Password must be at least 8 characters.', 'error');
+      toast.error('Password must be at least 8 characters.');
       return;
     }
     setSaving((s) => ({ ...s, security: true }));
@@ -281,9 +256,7 @@ const PatientProfile = () => {
         newPassword:     passwords.newPassword,
       });
       setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      showToast('security', 'Password changed successfully.');
-    } catch (err) {
-      showToast('security', err.response?.data?.message || 'Failed to change password.', 'error');
+    } catch {
     } finally {
       setSaving((s) => ({ ...s, security: false }));
     }
@@ -299,9 +272,7 @@ const PatientProfile = () => {
       const { data } = await patientAPI.uploadImage(fd);
       setProfile((p) => ({ ...p, profileImage: data.data.profileImage }));
       if (updateUser) updateUser({ profileImage: data.data.profileImage });
-      showToast('personal', 'Profile photo updated.');
     } catch {
-      showToast('personal', 'Image upload failed.', 'error');
     } finally {
       setImageUploading(false);
       fileRef.current.value = '';
@@ -364,7 +335,7 @@ const PatientProfile = () => {
 
         {/* ── Sidebar nav ───────────────────────────────────────────────────── */}
         <nav className="hidden md:flex flex-col gap-1 shrink-0 w-44">
-          {SECTIONS.map((s) => (
+          {visibleSections.map((s) => (
             <button
               key={s}
               onClick={() => setActive(s)}
@@ -382,7 +353,7 @@ const PatientProfile = () => {
         {/* ── Mobile tab row ────────────────────────────────────────────────── */}
         <div className="md:hidden w-full">
           <div className="flex gap-1 overflow-x-auto pb-1">
-            {SECTIONS.map((s) => (
+            {visibleSections.map((s) => (
               <button
                 key={s}
                 onClick={() => setActive(s)}
@@ -404,7 +375,6 @@ const PatientProfile = () => {
           {/* ── Personal ── */}
           {active === 'Personal' && (
             <form onSubmit={savePersonal}>
-              {toast.section === 'personal' && <Toast msg={toast.msg} type={toast.type} />}
               <SectionHeading title="Personal Information" desc="Update your name, contact details, and basic health info." />
 
               {/* Email — read only */}
@@ -463,7 +433,6 @@ const PatientProfile = () => {
           {/* ── Address ── */}
           {active === 'Address' && (
             <form onSubmit={saveAddress}>
-              {toast.section === 'address' && <Toast msg={toast.msg} type={toast.type} />}
               <SectionHeading title="Address" desc="Your residential address for medical records." />
 
               <div className="mb-4">
@@ -500,7 +469,6 @@ const PatientProfile = () => {
           {/* ── Medical ── */}
           {active === 'Medical' && (
             <form onSubmit={saveMedical}>
-              {toast.section === 'medical' && <Toast msg={toast.msg} type={toast.type} />}
               <SectionHeading title="Medical Information" desc="Keep your health information up to date for accurate care." />
 
               {/* Allergies */}
@@ -571,7 +539,6 @@ const PatientProfile = () => {
           {/* ── Emergency ── */}
           {active === 'Emergency' && (
             <form onSubmit={saveEmergency}>
-              {toast.section === 'emergency' && <Toast msg={toast.msg} type={toast.type} />}
               <SectionHeading title="Emergency Contact" desc="Someone to contact in case of a medical emergency." />
 
               <div className="mb-4">
@@ -594,9 +561,8 @@ const PatientProfile = () => {
           )}
 
           {/* ── Security ── */}
-          {active === 'Security' && (
+          {!isGoogleAuth && active === 'Security' && (
             <form onSubmit={savePassword}>
-              {toast.section === 'security' && <Toast msg={toast.msg} type={toast.type} />}
               <SectionHeading title="Change Password" desc="Use a strong password of at least 8 characters." />
 
               <div className="mb-4">

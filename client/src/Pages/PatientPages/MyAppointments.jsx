@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { appointmentAPI, paymentAPI } from '../../utils/api';
+import useLockBodyScroll from '../../utils/useLockBodyScroll';
 import { FiPlus, FiAlertCircle, FiCalendar } from 'react-icons/fi';
 import AppointmentCard, { isUpcoming, isCancellable, formatDate, formatTime } from '../../Componets/PatientComponents/AppointmentCard';
 import DeleteConfirmModal from '../../Componets/SharedComponents/DeleteConfirmModal';
@@ -14,6 +15,7 @@ const TABS = [
 
 // Cancel modal
 const CancelModal = ({ appointment, onConfirm, onClose, loading }) => {
+  useLockBodyScroll();
   const [reason, setReason] = useState('');
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

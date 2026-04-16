@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../utils/api';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../Context/AuthContext';
+import { useTheme } from '../../Context/ThemeContext';
 import { FiSun, FiMoon, FiChevronLeft } from 'react-icons/fi';
 import { FaHeartbeat } from 'react-icons/fa';
+import { GoogleLogin } from '@react-oauth/google';
 
 const ROLES = [
   { value: 'patient', label: 'Patient' },
@@ -45,6 +46,29 @@ const SignupPage = () => {
   const [error, setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    const idToken = credentialResponse?.credential;
+    if (!idToken) {
+      setError('Google signup failed. Please try again.');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+    try {
+      const res = await authAPI.googleAuth(role, idToken);
+      const data = res.data.data;
+      if (!data.role) data.role = role;
+      data.authProvider = 'google';
+      saveUser(data);
+      navigate(DASHBOARD[role]);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Google signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRoleChange = (r) => {
     setRole(r);
     setForm({});
@@ -68,6 +92,7 @@ const SignupPage = () => {
       const res = await authAPI.register(role, form);
       const data = res.data.data;
       if (!data.role) data.role = role;
+      data.authProvider = 'local';
       saveUser(data);
       navigate(DASHBOARD[role]);
     } catch (err) {
@@ -194,6 +219,21 @@ const SignupPage = () => {
           >
             {loading ? 'Creating account…' : 'Create Account'}
           </button>
+
+          <div className="pt-2">
+            <div className="relative my-2 text-center text-xs text-gray-500 dark:text-gray-400">
+              <span className="px-2 bg-white dark:bg-gray-900 relative z-10">or continue with</span>
+              <div className="absolute left-0 right-0 top-1/2 border-t border-gray-200 dark:border-gray-700 z-0" />
+            </div>
+            <div className="w-full [&>div]:w-full">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google signup failed. Please try again.')}
+                useOneTap={false}
+                width="100%"
+              />
+            </div>
+          </div>
         </form>
 
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">

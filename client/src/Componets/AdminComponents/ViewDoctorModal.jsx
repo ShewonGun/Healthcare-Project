@@ -1,4 +1,5 @@
 import { FiX } from 'react-icons/fi';
+import useLockBodyScroll from '../../utils/useLockBodyScroll';
 
 const LabelValue = ({ label, value }) => (
 	<div>
@@ -9,6 +10,7 @@ const LabelValue = ({ label, value }) => (
 
 const ViewDoctorModal = ({ doctor, onClose }) => {
 	if (!doctor) return null;
+	useLockBodyScroll();
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>

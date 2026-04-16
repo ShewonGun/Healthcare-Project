@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import useLockBodyScroll from '../../utils/useLockBodyScroll';
 
 const StatusUpdateModal = ({ current, onClose, onSave, loading }) => {
+	useLockBodyScroll();
 	const [status, setStatus] = useState(current === 'pending' ? 'confirmed' : 'completed');
 	const [notes, setNotes] = useState('');
 

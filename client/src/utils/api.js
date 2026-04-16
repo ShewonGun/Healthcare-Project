@@ -73,6 +73,7 @@ api.interceptors.response.use(
 export const authAPI = {
   login:    (role, body) => api.post(`/auth/${role}/login`,    body),
   register: (role, body) => api.post(`/auth/${role}/register`, body),
+  googleAuth: (role, idToken) => api.post(`/auth/${role}/google`, { idToken }),
   logout:   ()           => api.post('/auth/logout'),
 };
 
@@ -147,6 +148,12 @@ export const reportAPI = {
     }),
   getMine: () => api.get("/reports"),
   getById: (id) => api.get(`/reports/${id}`),
+  update: (id, body) => {
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+    return api.put(`/reports/${id}`, body, isFormData
+      ? { headers: { "Content-Type": "multipart/form-data" } }
+      : undefined);
+  },
   delete: (id) => api.delete(`/reports/${id}`),
 };
 
@@ -183,6 +190,8 @@ export const adminAPI = {
   getAllPayments: () => api.get("/payments/admin/all"),
   markCashPaid: (appointmentId, body) =>
     api.put(`/payments/admin/${appointmentId}/mark-cash-paid`, body),
+  markRefunded: (appointmentId) =>
+    api.put(`/payments/admin/${appointmentId}/mark-refunded`),
 };
 
 // ── AI / Symptom Checker endpoints ───────────────────────────────────────────
