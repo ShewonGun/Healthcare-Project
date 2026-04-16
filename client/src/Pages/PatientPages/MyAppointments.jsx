@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { appointmentAPI, paymentAPI } from '../../utils/api';
+import { appointmentAPI, paymentAPI, telemedicineAPI } from '../../utils/api';
 import useLockBodyScroll from '../../utils/useLockBodyScroll';
 import { FiPlus, FiAlertCircle, FiCalendar } from 'react-icons/fi';
 import AppointmentCard, { isUpcoming, isCancellable, formatDate, formatTime } from '../../Componets/PatientComponents/AppointmentCard';
@@ -79,10 +79,12 @@ const MyAppointments = () => {
     Promise.all([
       appointmentAPI.getMine(),
       paymentAPI.getMine().catch(() => ({ data: { data: [] } })),
+      telemedicineAPI.getMySessions().catch(() => ({ data: { data: [] } })),
     ])
-      .then(([apptRes, payRes]) => {
+      .then(([apptRes, payRes, sessRes]) => {
         const appts    = apptRes.data.data || [];
         const payments = payRes.data.data  || [];
+        const sessions = sessRes.data.data || [];
 
         // Build a lookup: appointmentId → payment status
         const paidIds = new Set(
@@ -91,10 +93,25 @@ const MyAppointments = () => {
             .map((p) => p.appointmentId)
         );
 
+        // Build a lookup: appointmentId -> latest telemedicine session status
+        const sessionStatusByAppointment = sessions.reduce((acc, s) => {
+          if (!s?.appointmentId) return acc;
+          const existing = acc[s.appointmentId];
+          if (!existing || new Date(s.updatedAt || s.createdAt || 0) > new Date(existing.updatedAt || existing.createdAt || 0)) {
+            acc[s.appointmentId] = s;
+          }
+          return acc;
+        }, {});
+
         // Merge: if payment service says completed, override appointment paymentStatus
-        const merged = appts.map((a) =>
-          paidIds.has(a._id) ? { ...a, paymentStatus: 'paid' } : a
-        );
+        const merged = appts.map((a) => {
+          const session = sessionStatusByAppointment[a._id];
+          return {
+            ...a,
+            paymentStatus: paidIds.has(a._id) ? 'paid' : a.paymentStatus,
+            telemedicineSessionStatus: session?.status || null,
+          };
+        });
 
         setAppointments(merged);
       })

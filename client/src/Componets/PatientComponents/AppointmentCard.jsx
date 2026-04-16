@@ -159,8 +159,8 @@ const AppointmentCard = ({ appt, onCancel, onDeleteCancelled, deletingId, naviga
           </button>
         )}
 
-        {/* Join Session / Session Completed — telemedicine + paid */}
-        {appt.type === 'telemedicine' && appt.paymentStatus === 'paid' && appt.status === 'confirmed' && (
+        {/* Join Session / Session Completed */}
+        {appt.type === 'telemedicine' && appt.status === 'confirmed' && (appt.paymentStatus === 'paid' || appt.telemedicineSessionStatus === 'active') && (
           <button
             onClick={() => navigate(`/patient/telemedicine/${appt._id}`)}
             className="flex items-center gap-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded transition"
