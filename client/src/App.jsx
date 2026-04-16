@@ -30,7 +30,7 @@ import AdminProfile from './Pages/AdminPages/AdminProfile';
 import Landing from './Pages/SharedPages/Landing';
 import PatientDashboard from './Pages/PatientPages/PatientDashboard';
 import DoctorDashboard from './Pages/DoctorPages/DoctorDashboard';
-import { useTheme } from './context/ThemeContext';
+import { useTheme } from './Context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 
 const App = () => {
