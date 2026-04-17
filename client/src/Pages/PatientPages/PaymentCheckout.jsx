@@ -308,14 +308,6 @@ const PaymentCheckout = () => {
           <Row label="Amount" value={formatLkr(paidAmount)} />
         </div>
         <div className="flex gap-3 justify-center flex-wrap">
-          {appointment?.type === 'telemedicine' && (
-            <button
-              onClick={() => navigate(`/patient/telemedicine/${appointmentId}`)}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition"
-            >
-              Join Session
-            </button>
-          )}
           <button
             onClick={() => navigate('/patient/appointments')}
             className="px-5 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition"

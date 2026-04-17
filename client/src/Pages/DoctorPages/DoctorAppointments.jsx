@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { appointmentAPI } from '../../utils/api';
+import { appointmentAPI, telemedicineAPI } from '../../utils/api';
 import { FiCalendar, FiSearch } from 'react-icons/fi';
 import AppointmentCard, { isToday, isUpcoming } from '../../Componets/DoctorComponents/AppointmentCard';
 
@@ -28,8 +28,33 @@ const DoctorAppointments = () => {
   const ITEMS_PER_PAGE = 5;
 
   useEffect(() => {
-    appointmentAPI.getDoctorMine()
-      .then(({ data }) => setAppointments(data.data || []))
+    Promise.all([
+      appointmentAPI.getDoctorMine(),
+      telemedicineAPI.getMySessions().catch(() => ({ data: { data: [] } })),
+    ])
+      .then(([apptRes, sessRes]) => {
+        const appts = apptRes.data.data || [];
+        const sessions = sessRes.data.data || [];
+
+        const sessionStatusByAppointment = sessions.reduce((acc, s) => {
+          if (!s?.appointmentId) return acc;
+          const existing = acc[s.appointmentId];
+          if (!existing || new Date(s.updatedAt || s.createdAt || 0) > new Date(existing.updatedAt || existing.createdAt || 0)) {
+            acc[s.appointmentId] = s;
+          }
+          return acc;
+        }, {});
+
+        const merged = appts.map((a) => {
+          const session = sessionStatusByAppointment[a._id];
+          return {
+            ...a,
+            telemedicineSessionStatus: session?.status || null,
+          };
+        });
+
+        setAppointments(merged);
+      })
       .catch(() => setError('Failed to load appointments.'))
       .finally(() => setLoading(false));
   }, []);

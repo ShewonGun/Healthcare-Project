@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { appointmentAPI, paymentAPI, doctorAPI } from '../../utils/api';
+import { appointmentAPI, paymentAPI, doctorAPI, telemedicineAPI } from '../../utils/api';
 import { FiChevronLeft, FiCheck, FiEdit2, FiVideo, FiX, FiCalendar, FiUser, FiFileText, FiCreditCard, FiPaperclip, FiUpload, FiTrash2, FiExternalLink } from 'react-icons/fi';
 import CancelAppointmentModal from '../../Componets/DoctorComponents/CancelAppointmentModal';
 import NotesModal from '../../Componets/DoctorComponents/NotesModal';
@@ -58,6 +58,7 @@ const AppointmentDetails = () => {
 
   const [appt, setAppt]         = useState(null);
   const [patient, setPatient]   = useState(null);
+  const [telemedicineSessionStatus, setTelemedicineSessionStatus] = useState(null);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -81,6 +82,17 @@ const AppointmentDetails = () => {
       .then(({ data }) => setPatient(data.data))
       .catch(() => {}); // non-fatal
   }, [appt?.patientId]);
+
+  useEffect(() => {
+    if (!appt || appt.type !== 'telemedicine') {
+      setTelemedicineSessionStatus(null);
+      return;
+    }
+
+    telemedicineAPI.getByAppointment(appt._id)
+      .then(({ data }) => setTelemedicineSessionStatus(data?.data?.status || null))
+      .catch(() => setTelemedicineSessionStatus(null));
+  }, [appt]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -218,8 +230,9 @@ const AppointmentDetails = () => {
   const canCancel            = ['pending', 'confirmed'].includes(appt.status);
   const canAddNotes          = appt.status === 'completed';
   const canMarkPaid          = appt.paymentStatus === 'pending';
-  const canStartTelemedicine    = appt.type === 'telemedicine' && appt.status === 'confirmed';
-  const sessionCompleted        = appt.type === 'telemedicine' && appt.status === 'completed';
+  const sessionClosed           = appt.type === 'telemedicine' && ['ended', 'cancelled'].includes(telemedicineSessionStatus);
+  const canStartTelemedicine    = appt.type === 'telemedicine' && appt.status === 'confirmed' && !sessionClosed;
+  const sessionCompleted        = appt.type === 'telemedicine' && (appt.status === 'completed' || sessionClosed);
   const canManagePrescription   = appt.status === 'completed';
 
   return (

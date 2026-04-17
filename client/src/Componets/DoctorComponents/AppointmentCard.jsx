@@ -36,6 +36,8 @@ export const isUpcoming = (a) => ['pending', 'confirmed'].includes(a.status);
 const AppointmentCard = ({ appt, navigate }) => {
   const cfg   = STATUS_CONFIG[appt.status] || STATUS_CONFIG.pending;
   const today = isToday(appt.appointmentDate);
+  const sessionClosed = appt.type === 'telemedicine' && ['ended', 'cancelled'].includes(appt.telemedicineSessionStatus);
+  const showCompletedSession = appt.type === 'telemedicine' && (appt.status === 'completed' || sessionClosed);
 
   return (
     <div
@@ -116,7 +118,7 @@ const AppointmentCard = ({ appt, navigate }) => {
 
       {/* Actions row */}
       <div className="flex items-center justify-between gap-2 mt-3">
-        {appt.type === 'telemedicine' && appt.status === 'confirmed' && (
+        {appt.type === 'telemedicine' && appt.status === 'confirmed' && !sessionClosed && (
           <button
             onClick={(e) => { e.stopPropagation(); navigate(`/doctor/telemedicine/${appt._id}`); }}
             className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1 rounded transition"
@@ -125,7 +127,7 @@ const AppointmentCard = ({ appt, navigate }) => {
             Start Session
           </button>
         )}
-        {appt.type === 'telemedicine' && appt.status === 'completed' && (
+        {showCompletedSession && (
           <span
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-2.5 py-1 rounded"
