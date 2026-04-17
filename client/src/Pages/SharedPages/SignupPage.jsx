@@ -6,6 +6,11 @@ import { useTheme } from '../../Context/ThemeContext';
 import { FiSun, FiMoon, FiChevronLeft } from 'react-icons/fi';
 import { FaHeartbeat } from 'react-icons/fa';
 import { GoogleLogin } from '@react-oauth/google';
+import {
+  getPasswordValidation,
+  getPasswordStrengthClasses,
+  getPasswordFirstError,
+} from '../../utils/passwordValidation';
 
 const ROLES = [
   { value: 'patient', label: 'Patient' },
@@ -83,8 +88,11 @@ const SignupPage = () => {
     e.preventDefault();
     setError('');
 
-    if (form.password && form.password.length < 8) {
-      return setError('Password must be at least 8 characters.');
+    if (form.password) {
+      const validation = getPasswordValidation(form.password);
+      if (!validation.isValid) {
+        return setError(getPasswordFirstError(validation));
+      }
     }
 
     setLoading(true);
@@ -103,6 +111,7 @@ const SignupPage = () => {
   };
 
   const fields = ROLE_FIELDS[role];
+  const passwordValidation = getPasswordValidation(form.password || '');
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center px-4 py-10">
@@ -206,6 +215,37 @@ const SignupPage = () => {
               </div>
             ))}
 
+          {fields.includes('password') && (form.password || '').length > 0 && (
+            <div className="rounded-md border border-gray-200 dark:border-gray-700 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-300">Password Strength</p>
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{passwordValidation.label}</span>
+              </div>
+
+              <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-3">
+                <div
+                  className={`h-full transition-all ${getPasswordStrengthClasses(passwordValidation.score)}`}
+                  style={{ width: `${(passwordValidation.score / 5) * 100}%` }}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-xs">
+                <p className={passwordValidation.checks.minLength ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
+                  At least 8 characters
+                </p>
+                <p className={passwordValidation.checks.uppercase ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
+                  1 uppercase letter
+                </p>
+                <p className={passwordValidation.checks.number ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
+                  1 number
+                </p>
+                <p className={passwordValidation.checks.special ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
+                  1 special character
+                </p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm rounded-md px-4 py-2.5">
               {error}
@@ -225,12 +265,12 @@ const SignupPage = () => {
               <span className="px-2 bg-white dark:bg-gray-900 relative z-10">or continue with</span>
               <div className="absolute left-0 right-0 top-1/2 border-t border-gray-200 dark:border-gray-700 z-0" />
             </div>
-            <div className="w-full [&>div]:w-full">
+            <div className="w-full flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setError('Google signup failed. Please try again.')}
                 useOneTap={false}
-                width="100%"
+                width="300"
               />
             </div>
           </div>

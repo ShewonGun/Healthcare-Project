@@ -176,12 +176,12 @@ const LoginPage = () => {
                 <span className="px-2 bg-white dark:bg-gray-900 relative z-10">or continue with</span>
                 <div className="absolute left-0 right-0 top-1/2 border-t border-gray-200 dark:border-gray-700 z-0" />
               </div>
-              <div className="w-full [&>div]:w-full">
+              <div className="w-full flex justify-center">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={() => setError('Google login failed. Please try again.')}
                   useOneTap={false}
-                  width="100%"
+                  width="300"
                 />
               </div>
             </div>

@@ -3,6 +3,11 @@ import { patientAPI } from '../../utils/api';
 import { useAuth } from '../../Context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { FiChevronDown, FiX, FiEdit2, FiPlus } from 'react-icons/fi';
+import {
+  getPasswordValidation,
+  getPasswordStrengthClasses,
+  getPasswordFirstError,
+} from '../../utils/passwordValidation';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const SECTIONS = ['Personal', 'Address', 'Medical', 'Emergency', 'Security'];
@@ -151,6 +156,7 @@ const PatientProfile = () => {
   const [medications, setMedications]           = useState([]);
   const [emergency, setEmergency]               = useState({ name: '', relationship: '', phone: '' });
   const [passwords, setPasswords]               = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const passwordValidation = getPasswordValidation(passwords.newPassword);
 
   const isGoogleAuth = user?.authProvider === 'google';
   const visibleSections = isGoogleAuth
@@ -241,12 +247,12 @@ const PatientProfile = () => {
 
   const savePassword = async (e) => {
     e.preventDefault();
-    if (passwords.newPassword !== passwords.confirmPassword) {
-      toast.error('New passwords do not match.');
+    if (!passwordValidation.isValid) {
+      toast.error(getPasswordFirstError(passwordValidation));
       return;
     }
-    if (passwords.newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters.');
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      toast.error('New passwords do not match.');
       return;
     }
     setSaving((s) => ({ ...s, security: true }));
@@ -594,6 +600,27 @@ const PatientProfile = () => {
                   />
                 </div>
               </div>
+
+              {passwords.newPassword && (
+                <div className="mb-6 rounded-md border border-gray-200 dark:border-gray-700 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-300">Password Strength</p>
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{passwordValidation.label}</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-3">
+                    <div
+                      className={`h-full transition-all ${getPasswordStrengthClasses(passwordValidation.score)}`}
+                      style={{ width: `${(passwordValidation.score / 5) * 100}%` }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-xs">
+                    <p className={passwordValidation.checks.minLength ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>At least 8 characters</p>
+                    <p className={passwordValidation.checks.uppercase ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>1 uppercase letter</p>
+                    <p className={passwordValidation.checks.number ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>1 number</p>
+                    <p className={passwordValidation.checks.special ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>1 special character</p>
+                  </div>
+                </div>
+              )}
 
               <SaveButton loading={saving.security} label="Change Password" />
             </form>
